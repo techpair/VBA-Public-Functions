@@ -202,15 +202,7 @@ Function FormatRange(ws As Worksheet, rngToFormat As range, colorOfFont As Long,
                 .Size = fontSizeOfRange '10
                 .Bold = blnIsBold
                 
-                '.Strikethrough = False
-    '            .Superscript = False
-    '            .Subscript = False
-    '            .OutlineFont = False
-    '            .Shadow = False
-    '            .Underline = xlUnderlineStyleNone
-    '            .Color = -16776961
-    '            .TintAndShade = 0
-    '            .ThemeFont = xlThemeFontMinor
+           
     
             End With
             
@@ -724,34 +716,34 @@ Sub StripAccents(Optional rng As range)
         rng.Select
     End If
     With Selection
-    .Replace What:="à", replacement:="a", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="á", replacement:="a", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="â", replacement:="a", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ã", replacement:="a", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ä", replacement:="a", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="å", replacement:="a", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="æ", replacement:="ae", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ç", replacement:="c", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="è", replacement:="e", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="é", replacement:="e", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ê", replacement:="e", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ë", replacement:="e", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ì", replacement:="i", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="í", replacement:="i", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="î", replacement:="i", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ï", replacement:="i", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ñ", replacement:="n", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ò", replacement:="o", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ó", replacement:="o", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ô", replacement:="o", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="õ", replacement:="o", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ö", replacement:="o", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ø", replacement:="o", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ù", replacement:="u", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ú", replacement:="u", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="û", replacement:="u", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ü", replacement:="u", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="ž", replacement:="z", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã ", replacement:="a", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¡", replacement:="a", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¢", replacement:="a", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã£", replacement:="a", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¤", replacement:="a", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¥", replacement:="a", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¦", replacement:="ae", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã§", replacement:="c", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¨", replacement:="e", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã©", replacement:="e", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ãª", replacement:="e", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã«", replacement:="e", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¬", replacement:="i", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã­", replacement:="i", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã®", replacement:="i", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¯", replacement:="i", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã±", replacement:="n", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã²", replacement:="o", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã³", replacement:="o", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã´", replacement:="o", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ãµ", replacement:="o", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¶", replacement:="o", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¸", replacement:="o", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¹", replacement:="u", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ãº", replacement:="u", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã»", replacement:="u", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Ã¼", replacement:="u", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="Âž", replacement:="z", MatchCase:=False, LookAt:=xlPart
     End With
 End Sub
 
