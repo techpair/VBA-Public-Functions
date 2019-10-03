@@ -196,7 +196,7 @@ Function FormatRange(ws As Worksheet, rngToFormat As range, colorOfFont As Long,
             
             With .Font
                 .Color = colorOfFont '-16776961
-                '.TintAndShade = 0
+                
             
                 .Name = strFontName '"Calibri"
                 .Size = fontSizeOfRange '10
@@ -251,23 +251,7 @@ Function FormatRange(ws As Worksheet, rngToFormat As range, colorOfFont As Long,
         End With
         
         
-'        Selection.Borders(xlDiagonalDown).LineStyle = xlNone
-'        Selection.Borders(xlDiagonalUp).LineStyle = xlNone
-'        Selection.Borders(xlEdgeLeft).LineStyle = xlNone
-'        Selection.Borders(xlEdgeTop).LineStyle = xlNone
-'
-'        With Selection.Borders(xlEdgeBottom)
-'            .LineStyle = xlContinuous
-'            .ThemeColor = 2
-'            .TintAndShade = 0
-'            .Weight = xlThin
-'        End With
-'
-'        Selection.Borders(xlEdgeRight).LineStyle = xlNone
-'        Selection.Borders(xlInsideVertical).LineStyle = xlNone
-'        Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
-'
-'        Range("C13").Select
+
         
     End With
     
