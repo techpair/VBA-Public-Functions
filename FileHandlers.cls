@@ -7,6 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Function OpenFiles(ByRef wbVariableToOpen As Workbook, strCompleteFilename As Variant, strFilename As String, Optional varWsName As Variant = Empty, Optional varKeyword As Variant, Optional xlLkAt As XlLookAt = xlPart, Optional strInputname As String)
 
     With Application
@@ -53,7 +54,7 @@ Function OpenFiles(ByRef wbVariableToOpen As Workbook, strCompleteFilename As Va
                             & "Input: '" & strInputname & "'" & vbNewLine & vbNewLine _
                             & "Please upload the correct '" & strInputname & "' file. This will stop the macro.", vbExclamation, "Opening input file"
                             Err.Clear
-                            CloseWorkbooks Array(wbMirlin, wbSecIdx, wbPrcVolFile)
+                            CloseWorkbooks Array(wbBackLoad, wbSecIdx, wbPrcVolFile)
                             End
                             
                         End If
@@ -69,7 +70,7 @@ Function OpenFiles(ByRef wbVariableToOpen As Workbook, strCompleteFilename As Va
                             & "Workbook name: '" & strFilename & "'" & vbNewLine _
                             & "Input file: '" & strInputname & "'" & vbNewLine & vbNewLine _
                             & "Please upload the correct '" & strInputname & "' file. This will stop the macro.", vbExclamation, "Opening input file"
-                            CloseWorkbooks Array(wbMirlin, wbSecIdx, wbPrcVolFile)
+                            CloseWorkbooks Array(wbBackLoad, wbSecIdx, wbPrcVolFile)
                             Err.Clear
                             End
                         
@@ -85,7 +86,8 @@ Function OpenFiles(ByRef wbVariableToOpen As Workbook, strCompleteFilename As Va
 End Function
 
 
-Function SaveReport(strTimeFormat As String, ByRef wbToSave As Workbook, strFilename As String, blnToClose As Boolean, Optional strOutputDir As String, Optional blnMakeVal As Boolean) As Boolean
+Function SaveReport(strTimeFormat As String, ByRef wbToSave As Workbook, strFilename As String, blnToClose As Boolean, _
+   excelFileFormat As Long, strExcelExtension As String, Optional strOutputDir As String, Optional blnMakeVal As Boolean) As Boolean
      
     '****************************************************************************************************
     'Purpose:Saves the report automatically to a directory
@@ -119,11 +121,16 @@ Function SaveReport(strTimeFormat As String, ByRef wbToSave As Workbook, strFile
         
         On Error Resume Next
         
-        Workbooks(Trim(Replace(strFilename, ".", " ") & " " & strSysTym & ".xlsx")).Close False
+        'extensions examples:
+        '.xlsx
+        '.xls
+        '.csv
+        
+        Workbooks(Trim(Replace(strFilename, ".", " ") & " " & strSysTym & strExcelExtension)).Close False
         On Error GoTo errorline
         Err.Clear
         
-        .SaveAs strOutDir & Replace(strFilename, ".", " ") & " " & strSysTym, FileFormat:=xlOpenXMLWorkbook, CreateBackup:=False
+        .SaveAs strOutDir & Replace(strFilename, ".", " ") & " " & strSysTym, FileFormat:=excelFileFormat, CreateBackup:=False
         
         Application.DisplayAlerts = True
         
