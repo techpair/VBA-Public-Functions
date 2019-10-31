@@ -66,6 +66,7 @@ Function CreatePivot(wb As Workbook, destWs As Worksheet, youPivotTblName As Str
     Dim PCache As PivotCache
     
     On Error Resume Next
+  
     
     sourceData = "'" & srcDataws.Name & "'" & "!" & "R" & srcStartRow & "C" & srcStartColumn & ":R" & srcEndRow & "C" & _
         srcEndColumn
@@ -87,16 +88,17 @@ Function CreatePivot(wb As Workbook, destWs As Worksheet, youPivotTblName As Str
         .Orientation = pivotFieldOrientation
         .Position = 1
     End With
+       
+       
+       
+    If pivotField18 <> vbNullString Then
+        With destWs.PivotTables(youPivotTblName).PivotFields(pivotField18)
+            .Orientation = pivotField18Orientation
+            .Position = 1
+            .Function = xlSum
+        End With
+    End If
     
-'    If pivotField17 <> vbNullString Then
-'        With destWs.PivotTables(youPivotTblName).PivotFields(pivotField17)
-'            .Orientation = pivotField17Orientation
-'            .Position = 1
-'            .Function = xlSum
-'        End With
-'    End If
-    
-   
     If pivotField16 <> vbNullString Then
         With destWs.PivotTables(youPivotTblName).PivotFields(pivotField16)
             .Orientation = pivotField16Orientation
@@ -105,14 +107,7 @@ Function CreatePivot(wb As Workbook, destWs As Worksheet, youPivotTblName As Str
         End With
     End If
            
-    If pivotField15 <> vbNullString Then
-        With destWs.PivotTables(youPivotTblName).PivotFields(pivotField15)
-            .Orientation = pivotField15Orientation
-            .Position = 1
-            .Function = xlSum
-        End With
-    End If
-   
+    
     
     If pivotField14 <> vbNullString Then
         With destWs.PivotTables(youPivotTblName).PivotFields(pivotField14)
@@ -186,14 +181,6 @@ Function CreatePivot(wb As Workbook, destWs As Worksheet, youPivotTblName As Str
         End With
     End If
     
-    If pivotField18 <> vbNullString Then
-        With destWs.PivotTables(youPivotTblName).PivotFields(pivotField18)
-            .Orientation = pivotField18Orientation
-            .Position = 1
-            .Function = xlSum
-        End With
-    End If
-    
     If pivotField5 <> vbNullString Then
         With destWs.PivotTables(youPivotTblName).PivotFields(pivotField5)
             .Orientation = pivotField5Orientation
@@ -248,47 +235,5 @@ Function CreatePivot(wb As Workbook, destWs As Worksheet, youPivotTblName As Str
     End If
     
     wb.ShowPivotTableFieldList = False
-    
-'    With destWs.PivotTables(youPivotTblName).PivotFields("Institution Type")
-'        .Orientation = xlPageField
-'        .Position = 1
-'    End With
-'
-'    With destWs.PivotTables(youPivotTblName).PivotFields("Updated Region")
-'        .Orientation = xlPageField
-'        .Position = 1
-'    End With
-'
-'    destWs.PivotTables(youPivotTblName).PivotFields("Updated Region"). _
-'        CurrentPage = "(All)"
-'
-'    With destWs.PivotTables(youPivotTblName).PivotFields("Updated Region")
-'        .PivotItems("Broker").Visible = False
-'        .PivotItems("Europe").Visible = False
-'        .PivotItems("North America").Visible = False
-'        .PivotItems("Rest of World").Visible = False
-'        .PivotItems("Retail/Other").Visible = False
-'    End With
-'
-'    destWs.PivotTables(youPivotTblName).PivotFields("Updated Region"). _
-'        EnableMultiplePageItems = True
-'
-'    destWs.PivotTables(youPivotTblName).PivotFields("Institution Type"). _
-'        CurrentPage = "(All)"
-'
-'    With destWs.PivotTables(youPivotTblName).PivotFields("Institution Type")
-'        .PivotItems("Brokers").Visible = False
-'        .PivotItems("Employees").Visible = False
-'        .PivotItems("Retail/Other").Visible = False
-'    End With
-'
-'    destWs.PivotTables(youPivotTblName).PivotFields("Institution Type"). _
-'        EnableMultiplePageItems = True
-'
-'    destWs.PivotTables(youPivotTblName).DataPivotField.Caption = " "
-'
-'     destWs.PivotTables(youPivotTblName).PivotFields("Investor Name"). _
-'        AutoSort xlDescending, "Sum of Change", destWs.PivotTables( _
-'        "InvHistSummary").PivotColumnAxis.PivotLines(3), 1
     
 End Function
