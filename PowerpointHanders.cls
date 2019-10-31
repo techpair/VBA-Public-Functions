@@ -7,6 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Function SetColorWeightingsinPowerpoint(iRow As Long, Lrow As Long, iCol1 As Long, iCol2 As Long, strTable As String)
     'set color for two tables
     Dim r As Long
