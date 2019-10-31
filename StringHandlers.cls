@@ -7,6 +7,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
+
 Function GetColumnLetter(iCol As Integer) As String
 '
 ' Feed in a column number and spew out the column letter
