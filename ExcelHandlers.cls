@@ -8,6 +8,7 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
+
 Function AlignLeft(rng As range)
 
 '***********************************************************************************
@@ -196,13 +197,21 @@ Function FormatRange(ws As Worksheet, rngToFormat As range, colorOfFont As Long,
             
             With .Font
                 .Color = colorOfFont '-16776961
-                
+                '.TintAndShade = 0
             
                 .Name = strFontName '"Calibri"
                 .Size = fontSizeOfRange '10
                 .Bold = blnIsBold
                 
-           
+                '.Strikethrough = False
+    '            .Superscript = False
+    '            .Subscript = False
+    '            .OutlineFont = False
+    '            .Shadow = False
+    '            .Underline = xlUnderlineStyleNone
+    '            .Color = -16776961
+    '            .TintAndShade = 0
+    '            .ThemeFont = xlThemeFontMinor
     
             End With
             
@@ -251,7 +260,23 @@ Function FormatRange(ws As Worksheet, rngToFormat As range, colorOfFont As Long,
         End With
         
         
-
+'        Selection.Borders(xlDiagonalDown).LineStyle = xlNone
+'        Selection.Borders(xlDiagonalUp).LineStyle = xlNone
+'        Selection.Borders(xlEdgeLeft).LineStyle = xlNone
+'        Selection.Borders(xlEdgeTop).LineStyle = xlNone
+'
+'        With Selection.Borders(xlEdgeBottom)
+'            .LineStyle = xlContinuous
+'            .ThemeColor = 2
+'            .TintAndShade = 0
+'            .Weight = xlThin
+'        End With
+'
+'        Selection.Borders(xlEdgeRight).LineStyle = xlNone
+'        Selection.Borders(xlInsideVertical).LineStyle = xlNone
+'        Selection.Borders(xlInsideHorizontal).LineStyle = xlNone
+'
+'        Range("C13").Select
         
     End With
     
@@ -288,7 +313,7 @@ Sub ProcessRankLevelData(ws As Worksheet, refCol As Long, startRow As Long, last
                             lastRangeRow = .Cells(verticalCtr, refCol).End(xlDown).row - 1
                             
                             If lastRangeRow = .Cells.Rows.Count - 1 Then
-                                lastRangeRow = .Cells(verticalCtr, columnNum).End(xlDown).row
+                                lastRangeRow = lastRow '.Cells(verticalCtr, columnNum).End(xlDown).row
                             End If
                             
                             .Cells(verticalCtr, columnNum).Value = Application.WorksheetFunction.Sum( _
@@ -299,8 +324,17 @@ Sub ProcessRankLevelData(ws As Worksheet, refCol As Long, startRow As Long, last
                 
             Next arrCtr
             
-            verticalCtr = .Cells(verticalCtr, refCol).End(xlDown).row - 1  ' minus 1 to handle the "Next" command below or else it will skip the ranks row
+             If verticalCtr = .Cells.Rows.Count - 1 Then
+                verticalCtr = lastRow '.Cells(verticalCtr, columnNum).End(xlDown).row
+             End If
             
+            
+            verticalCtr = .Cells(verticalCtr, refCol).End(xlDown).row - 1  ' minus 1 to handle the "Next" command below or else it will skip the ranks row
+'
+             If verticalCtr = .Cells.Rows.Count - 1 Then
+                verticalCtr = lastRow '.Cells(verticalCtr, columnNum).End(xlDown).row
+             End If
+'
             If verticalCtr = .Cells.Rows.Count Then
                 Exit For
             End If
@@ -400,12 +434,14 @@ Function CloseAllWb(workbooknames As Variant)
 End Function
 
 
-Function ConsolidateSameColumns(arrayWb As Variant, arrayWs As Variant, ByRef arrayColumns As Variant, configSheet As Worksheet, Optional plotInputTagging As Boolean = False, _
+Function ConsolidateSameColumns(wb1 As Workbook, arrayWb As Variant, arrayWs As Variant, ByRef arrayColumns As Variant, Optional plotInputTagging As Boolean = False, _
     Optional plotGroupTagging As Boolean = False) As Long
     
     Dim lastRow As Long, startRow As Long, refCol As Long, destStartRow As Long, destLastRow As Long, destRefCol As Long
+    Dim refColForLastRow As Long, destRefColForLastRow As Long
+    
     Dim wbCtr As Long, keywordCtr As Long, strKeyword As String
-    Dim wb As Workbook, ws As Worksheet, destWB As Workbook, destWs As Worksheet
+    Dim wb As Workbook, ws As Worksheet, destWb As Workbook, destWs As Worksheet
     Dim destLastCol As Long
     Dim inputCount As Long
     
@@ -417,11 +453,17 @@ Function ConsolidateSameColumns(arrayWb As Variant, arrayWs As Variant, ByRef ar
     Dim strGroupName As String
     Dim mktValCol As Long, dblSharePrice As Double
     
-    'This function assumes you already know the worksheet names to combine.
+On Error GoTo errorline
     
-    Workbooks.Add
-    Set destWB = ActiveWorkbook
-    Set destWs = destWB.Sheets(1)
+    'This function assumes you already know the worksheet names to combine.
+    wb1.Sheets.Add
+    Set destWb = wb1
+    Set destWs = destWb.ActiveSheet
+    'Workbooks.Add
+    
+    'Set destWb = ActiveWorkbook
+    
+    'Set destWs = destWb.Sheets(1)
     destWs.Name = "Conso"
         
     With destWs
@@ -464,13 +506,30 @@ Function ConsolidateSameColumns(arrayWb As Variant, arrayWs As Variant, ByRef ar
             With ws
                 startRow = FindRow(wb, ws, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
                 refCol = FindColumn(wb, ws, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
-                lastRow = .Cells(.Cells.Rows.Count, refCol).End(xlUp).row
+                refColForLastRow = FindColumn_continuous(wb, ws, .UsedRange, "Investment Manager", xlWhole)
+                
+                If refColForLastRow <> 0 Then
+                    lastRow = .Cells(.Cells.Rows.Count, refColForLastRow).End(xlUp).row
+                Else
+                    lastRow = .Cells(.Cells.Rows.Count, refCol).End(xlUp).row
+                End If
+                
             End With
             
             With destWs
-                destStartRow = FindRow(destWB, destWs, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
-                destRefCol = FindColumn(destWB, destWs, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
-                destLastRow = .Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row
+                destStartRow = FindRow(destWb, destWs, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
+                
+                destRefColForLastRow = FindColumn_continuous(destWb, destWs, .UsedRange, "Investment Manager", xlWhole)  'FindColumn(destWB, destWs, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
+                
+                destRefCol = FindColumn(destWb, destWs, .UsedRange, CStr(arrayColumns(LBound(arrayColumns, 1))), xlWhole)
+                
+                If destRefColForLastRow <> 0 Then
+                    destLastRow = .Cells(.Cells.Rows.Count, destRefColForLastRow).End(xlUp).row
+                Else
+                    destLastRow = .Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row
+                End If
+                
+                
                 If destLastRow = .Cells.Rows.Count Then destLastRow = destStartRow
             End With
             
@@ -507,11 +566,11 @@ Function ConsolidateSameColumns(arrayWb As Variant, arrayWs As Variant, ByRef ar
                     .range(.Cells(startRow + 1, refCol), .Cells(lastRow, refCol)).Copy
                 End With
                 
-                destWB.Activate
+                destWb.Activate
                 
                 With destWs
                     .Activate
-                    destRefCol = FindColumn_continuous(destWB, destWs, .UsedRange, strKeyword, xlWhole)
+                    destRefCol = FindColumn_continuous(destWb, destWs, .UsedRange, strKeyword, xlWhole)
                     
                     If destRefCol = 0 Then
                         destLastCol = destLastCol + 1
@@ -540,40 +599,6 @@ Function ConsolidateSameColumns(arrayWb As Variant, arrayWs As Variant, ByRef ar
                     .range(.Cells(destLastRow + 1, inputTaggingCol), .Cells(.Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row, inputTaggingCol)).Value = ws.Name
                 End If
                                 
-                                
-                                
-                
-                If plotGroupTagging = True And .Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row <> .Cells.Rows.Count Then
-                    
-                    
-                    On Error Resume Next
-                    configFilenameRow = configSheet.Application.WorksheetFunction.Match(CStr(arrayWs(wbCtr)), configSheet.Columns("A:A"), 0)
-                    On Error GoTo 0
-                    Err.Clear
-                    
-                    'this will list all the previous shares of the uploaded input files if they are available in the config tab
-                    
-                    If configFilenameRow > 0 Then
-                        strGroupName = configSheet.Cells(configFilenameRow, 3).Value
-                    Else
-                        ErrorHandler.ErrorHandler "Macro cannot find the grouping of the filename: " & CStr(arrayWs(wbCtr)) & vbNewLine & vbNewLine & _
-                        "Please re-configure the input files' setup in the macro file tab 'Inputs Config with groupings'."
-                    End If
-                    
-                    'plot group names
-                    .range(.Cells(destLastRow + 1, groupTaggingCol), .Cells(.Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row, groupTaggingCol)).Value = strGroupName
-                    .range(.Cells(destLastRow + 1, groupTaggingCol + 1), .Cells(.Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row, groupTaggingCol + 1)).Value = configSheet.Cells(configFilenameRow, 4).Value
-                    
-                    'compute market value
-                    dblSharePrice = configSheet.Cells(configFilenameRow, 5).Value
-                    
-                    .Cells(destLastRow + 1, mktValCol).Formula = "=" & .Cells(destLastRow + 1, 4).Address(False, False) & "*" & dblSharePrice
-                    
-                    .Cells(destLastRow + 1, mktValCol).AutoFill .range(.Cells(destLastRow + 1, mktValCol), .Cells(.Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row, mktValCol))
-                    
-                    .range(.Cells(destLastRow + 1, mktValCol), .Cells(.Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row, mktValCol)).Value = _
-                        .range(.Cells(destLastRow + 1, mktValCol), .Cells(.Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row, mktValCol)).Value
-                End If
                 
                 inputCount = inputCount + 1
                 destLastRow = .Cells(.Cells.Rows.Count, destRefCol).End(xlUp).row
@@ -583,14 +608,18 @@ Function ConsolidateSameColumns(arrayWb As Variant, arrayWs As Variant, ByRef ar
         Set ws = Nothing
        
     Next wbCtr
-        Set destWB = Nothing
+        Set destWb = Nothing
         Set destWs = Nothing
         
         ConsolidateSameColumns = inputCount
-        
+    Exit Function
+errorline:
+    ErrorHandler.ErrorHandler "Error while consolidating same columns."
+    
 End Function
 
-Sub CopyWorksheet(destWB As Workbook, arraySrcFilenames As Variant, arrayWsNames As Variant, strAfterThisSheet As String)
+Sub CopyWorksheet(destWb As Workbook, arraySrcFilenames As Variant, arrayWsNames As Variant, strAfterThisSheet As String, Optional blnHide As Boolean = False, _
+    Optional ByRef wsToSave As Worksheet, Optional shouldSaveSheet As Boolean)
     
     Dim varSrcFilename As Variant, strSrcFilename As String, strWsName As String
     Dim ctr As Long
@@ -609,11 +638,25 @@ Sub CopyWorksheet(destWB As Workbook, arraySrcFilenames As Variant, arrayWsNames
         Set wbSrc = Workbooks(strSrcFilename)
         
         If strWsName <> vbNullString Then
-        
-            wbSrc.Sheets(strWsName).Copy After:=destWB.Sheets(strAfterThisSheet)
+            
+            wbSrc.Sheets(strWsName).Copy After:=destWb.Sheets(strAfterThisSheet)
+            
+            If shouldSaveSheet = True Then
+                Set wsToSave = ActiveSheet 'destWb.Sheets(strWsName)
+            End If
+            
         Else
-            wbSrc.Sheets(strSrcFilename).Copy After:=destWB.Sheets(strAfterThisSheet)
+            wbSrc.Sheets(strSrcFilename).Copy After:=destWb.Sheets(strAfterThisSheet)
+            
+            If shouldSaveSheet = True Then
+                Set wsToSave = ActiveSheet 'destWb.Sheets(strSrcFilename)
+            End If
+            
         End If
+        
+        
+        
+        If blnHide = True Then ActiveSheet.Visible = xlSheetHidden
         
     Next ctr
     
@@ -659,6 +702,10 @@ Sub CopyPasteValues(ws As Worksheet, rng As range)
 ' If rng is given, then...  well, duh.  If not, it'll do the entire sheet.
 '
     'PrintToLog ("Calling CopyPasteValues")
+    
+    On Error GoTo errorline
+    
+    ws.Activate
     If rng Is Nothing Then
         ws.Cells.Select
     Else
@@ -671,6 +718,11 @@ Sub CopyPasteValues(ws As Worksheet, rng As range)
     End With
     
     Application.CutCopyMode = False
+    
+    Exit Sub
+errorline:
+    ErrorHandler.ErrorHandler "Error while copy-pasting into values the sheet: " & ws.Name & " with the range of cells " & rng.Address
+    
 End Sub
 
 
@@ -727,7 +779,7 @@ Sub StripAccents(Optional rng As range)
     .Replace What:="ú", replacement:="u", MatchCase:=False, LookAt:=xlPart
     .Replace What:="û", replacement:="u", MatchCase:=False, LookAt:=xlPart
     .Replace What:="ü", replacement:="u", MatchCase:=False, LookAt:=xlPart
-    .Replace What:="", replacement:="z", MatchCase:=False, LookAt:=xlPart
+    .Replace What:="ž", replacement:="z", MatchCase:=False, LookAt:=xlPart
     End With
 End Sub
 
@@ -754,7 +806,7 @@ Sub RemoveCharacters(ws As Worksheet, Optional rng As range)
 End Sub
 
 
-Sub DeleteSheet(sh As String, wb As Workbook)
+Sub DeleteSheet(sh As String, wb As Workbook, Optional saveDeletion As Boolean, Optional ByRef ws As Worksheet)
 '
 ' If the sheet exists
 ' DELETE IT! XD
@@ -764,6 +816,9 @@ Sub DeleteSheet(sh As String, wb As Workbook)
         Application.DisplayAlerts = False
         wb.Sheets(sh).Delete
         Application.DisplayAlerts = True
+        If saveDeletion = True Then
+            Set ws = Nothing
+        End If
     End If
 End Sub
 
@@ -875,7 +930,6 @@ Function SetSheet(wbToCheck As Workbook, strWsNameToCheck As String, ByRef wsVar
     End If
     
 End Function
-
 
 Function FindRow(ByRef wb As Workbook, ByRef ws As Worksheet, rng As range, val As String, Optional xlLkAt As XlLookAt, Optional varArrayInputFiles As Variant, Optional direct As XlSearchDirection) As Long
 
@@ -1166,16 +1220,19 @@ Public Function GetLastCol(ws As Worksheet, Optional longRow As Long = 1) As Lon
 End Function
 
 Public Function GetFirstFilteredRow(ws As Worksheet) As Long
-
+    On Error Resume Next
     GetFirstFilteredRow = ws.AutoFilter.range.Offset(1, 0).SpecialCells(xlCellTypeVisible).row
-
+    On Error GoTo 0
+    Err.Clear
 End Function
 
 
 Public Function GetLastFilteredRow(ws As Worksheet, longRow As Long, Optional longCol As Long = 2) As Long
     
+    On Error Resume Next
     GetLastFilteredRow = ws.Cells(longRow, longCol).End(xlDown).row
-    
+    On Error GoTo 0
+    Err.Clear
 
 End Function
 
@@ -1332,7 +1389,7 @@ Sub DeleteChartsExcept(ws As Worksheet, strChartNm As String, Optional strChrtNm
 End Sub
 
 
-Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart As String, srcKeywordLast As String, destKeywordStart As String, destKeywordLast As String, destWB As Workbook, srcWb As Workbook, _
+Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart As String, srcKeywordLast As String, destKeywordStart As String, destKeywordLast As String, destWb As Workbook, srcWb As Workbook, _
     destKeywordsArray As Variant, srcKeywordsArray As Variant, Optional formulaString As String, Optional formulaColStr1 As String, Optional formulaColStr2 As String)
     
     Dim srcRngRowCount As Long, destRngRowCount As Long, rowDifference As Long
@@ -1352,8 +1409,8 @@ Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart A
     End With
     
     With destWs
-        destStartRow = ExlHandler.FindRow(destWB, destWs, .UsedRange, destKeywordStart, xlWhole) + 1
-        destLastRow = ExlHandler.FindRow(destWB, destWs, .UsedRange, destKeywordLast, xlWhole) - 1
+        destStartRow = ExlHandler.FindRow(destWb, destWs, .UsedRange, destKeywordStart, xlWhole) + 1
+        destLastRow = ExlHandler.FindRow(destWb, destWs, .UsedRange, destKeywordLast, xlWhole) - 1
         destRngRowCount = destLastRow - destStartRow + 1
         
     End With
@@ -1368,7 +1425,7 @@ Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart A
         With destWs
             Application.DisplayAlerts = False
             .Rows(destLastRow & ":" & destLastRow + rowDifference + 1).Delete
-            destLastRow = ExlHandler.FindRow(destWB, destWs, .UsedRange, destKeywordLast, xlWhole) - 1
+            destLastRow = ExlHandler.FindRow(destWb, destWs, .UsedRange, destKeywordLast, xlWhole) - 1
             Application.DisplayAlerts = True
         End With
     ElseIf rowDifference > 0 Then
@@ -1377,7 +1434,7 @@ Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart A
         'source has more rows than the destination; insert rows in destination
         With destWs
             .Rows(destLastRow + 1 & ":" & destLastRow + rowDifference).Insert (xlUp)
-            destLastRow = ExlHandler.FindRow(destWB, destWs, .UsedRange, destKeywordLast, xlWhole) - 1
+            destLastRow = ExlHandler.FindRow(destWb, destWs, .UsedRange, destKeywordLast, xlWhole) - 1
         End With
         
     End If
@@ -1391,7 +1448,7 @@ Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart A
         destElementStr = destKeywordsArray(srcArrayCtr)
         
         srcKeywordLong = ExlHandler.FindColumn_continuous(srcWb, srcWs, srcWs.UsedRange, srcElementStr, xlWhole, direct:=xlPrevious)
-        destKeywordLong = ExlHandler.FindColumn_continuous(destWB, destWs, destWs.UsedRange, destElementStr, xlWhole, direct:=xlPrevious)
+        destKeywordLong = ExlHandler.FindColumn_continuous(destWb, destWs, destWs.UsedRange, destElementStr, xlWhole, direct:=xlPrevious)
         
         If srcKeywordLong <> 0 And destKeywordLong <> 0 Then
             With srcWs
@@ -1408,8 +1465,8 @@ Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart A
         
     Next srcArrayCtr
     
-    formulaCol1 = ExlHandler.FindColumn_continuous(destWB, destWs, destWs.UsedRange, formulaColStr1, xlWhole)
-    formulaCol2 = ExlHandler.FindColumn_continuous(destWB, destWs, destWs.UsedRange, formulaColStr2, xlWhole)
+    formulaCol1 = ExlHandler.FindColumn_continuous(destWb, destWs, destWs.UsedRange, formulaColStr1, xlWhole)
+    formulaCol2 = ExlHandler.FindColumn_continuous(destWb, destWs, destWs.UsedRange, formulaColStr2, xlWhole)
 
     'col1 are the values to process
     'col2 the destination column
@@ -1446,40 +1503,465 @@ Sub TransferRangeData(srcWs As Worksheet, destWs As Worksheet, srcKeywordStart A
 End Sub
 
 
-Sub RepositionTabs(tabsArray As Variant, destWB As Workbook)
+Sub RepositionTabs(tabsArray As Variant, destWb As Workbook)
     
     Dim arrayCtr As Long, tabNm As String, shCtr As Long, lastSheetNum As Long
     
-    destWB.Activate
+    destWb.Activate
     
     For arrayCtr = LBound(tabsArray) To UBound(tabsArray)
         tabNm = tabsArray(arrayCtr)
         
-        With destWB
-            .Sheets(tabNm).Move After:=.Sheets(arrayCtr + 1)
+        With destWb
+            .Sheets(tabNm).Move before:=.Sheets(arrayCtr + 1)
         End With
         
     Next arrayCtr
     
-    lastSheetNum = destWB.Sheets(arrayCtr + 1).Index
+    lastSheetNum = destWb.Sheets(arrayCtr + 1).Index
     
-    If lastSheetNum < destWB.Sheets.Count Then
+    If lastSheetNum < destWb.Sheets.Count Then
         
-        For shCtr = UBound(tabsArray) + 1 To destWB.Sheets.Count
+        For shCtr = UBound(tabsArray) + 1 To destWb.Sheets.Count
                 
-                If InStr(1, destWB.Sheets(shCtr).Name, "Data", vbTextCompare) > 0 Or _
-                    InStr(1, destWB.Sheets(shCtr).Name, " by ", vbTextCompare) > 0 Then
+                If InStr(1, destWb.Sheets(shCtr).Name, "Data", vbTextCompare) > 0 Or _
+                    InStr(1, destWb.Sheets(shCtr).Name, " by ", vbTextCompare) > 0 Then
                     
-                    destWB.Sheets(shCtr).Visible = xlSheetHidden
+                    destWb.Sheets(shCtr).Visible = xlSheetHidden
                     
                 End If
         Next shCtr
         
     End If
     
-    destWB.Sheets(1).Activate
+    destWb.Sheets(1).Activate
     
 End Sub
+
+
+
+Function PlotErrorDataInSheet(srcWb As Workbook, destWb As Workbook, ws As Worksheet, colWithError As Long, strError As String, arrayToGet As Variant, _
+    shDest As Worksheet, arrayColsToPasteInto As Variant) 'parameters are ref sheet, error string, column array to get, dest sheet, column array to paste into
+        
+    Dim firstFilteredRow As Long, lastFilteredRow As Long, longCount As Long, srcCol As Long, destCol As Long, srcColStr As String, destColStr As String
+    Dim arrayCtr As Long, destPlotRow As Long
+    
+    On Error GoTo errorline
+    
+    With ws
+        .UsedRange.AutoFilter colWithError, strError, xlFilterValues
+        
+             firstFilteredRow = ExlHandler.GetFirstFilteredRow(ws)
+            
+            If firstFilteredRow > 0 Then
+                .Activate
+                .Cells(firstFilteredRow, colWithError).Select  'investment manager column
+                lastFilteredRow = Selection.End(xlDown).row
+    
+                If lastFilteredRow > .Cells.Rows.Count - 5 Then lastFilteredRow = firstFilteredRow
+    
+    
+                longCount = WorksheetFunction.Subtotal(3, .range(.Cells(firstFilteredRow, colWithError), .Cells(lastFilteredRow, colWithError)))
+                
+                If longCount >= 1 Then
+                    
+                    
+                    shDest.Activate
+                    
+                    For arrayCtr = LBound(arrayToGet) To UBound(arrayToGet)
+                        
+                        
+                        srcColStr = arrayToGet(arrayCtr)
+                        destColStr = arrayColsToPasteInto(arrayCtr)
+                        
+                        srcCol = ExlHandler.FindColumn(srcWb, ws, .UsedRange, srcColStr)
+                        destCol = ExlHandler.FindColumn(destWb, shDest, shDest.UsedRange, destColStr)
+                            
+                        With shDest
+                            
+                            If destPlotRow = 0 Then
+                                destPlotRow = .Cells(.Cells.Rows.Count, destCol).End(xlUp).row + 1
+                            End If
+                            
+                            With ws
+                                .range(.Cells(firstFilteredRow, srcCol), .Cells(lastFilteredRow, srcCol)).Copy
+                            End With
+                            
+                            .Cells(destPlotRow, destCol).Select
+                            ActiveSheet.Paste
+                              
+                        End With
+                        
+                        
+                    Next arrayCtr
+                    destPlotRow = 0
+                End If
+            End If
+        
+    End With
+    
+    Exit Function
+errorline:
+    ErrorHandler.ErrorHandler "Error while plotting new positions in the DB."
+End Function
+
+
+
+Function isThereAnInstanceOfKeyword(ws As Worksheet, rng As range, str As String) As Boolean
+    
+    Dim countt As Long
+    
+    With ws
+        On Error Resume Next
+            countt = .Application.WorksheetFunction.CountIf(rng, str)
+        On Error GoTo 0
+        Err.Clear
+        
+        isThereAnInstanceOfKeyword = (countt > 0)
+        
+    End With
+    
+End Function
+
+Function SortData(wb As Workbook, ws As Worksheet, rngToSort As range, rngKey As range, sortorder As Long, Optional rngKey2 As range, Optional sortorder2 As Long)
+    
+    On Error GoTo errorline
+    
+    'sort data only
+    
+    wb.Activate
+    
+    With ws
+        .Activate
+        .Sort.SortFields.Clear
+        
+        .Sort.SortFields.Add _
+            Key:=rngKey, SortOn:=xlSortOnValues, order:=sortorder, _
+            DataOption:=xlSortNormal
+        
+        If Not rngKey2 Is Nothing Then
+             .Sort.SortFields.Add _
+            Key:=rngKey2, SortOn:=xlSortOnValues, order:=sortorder2, _
+            DataOption:=xlSortNormal
+        End If
+        
+        
+        With .Sort
+            .SetRange rngToSort
+            .Header = xlNo
+            .MatchCase = False
+            .Orientation = xlTopToBottom
+            .SortMethod = xlPinYin
+            .Apply
+        End With
+        
+    End With
+    
+    Exit Function
+errorline:
+    ErrorHandler.ErrorHandler "Error while sorting data of the worksheet " & ws.Name & " of its workbook " & wb.Name
+    
+End Function
+
+
+Function RenameInWorksheet(ws As Worksheet, srcArray As Variant, destArray As Variant, rng As range)
+    
+    Dim ctr As Long, strToReplace As String, strReplacementString As String
+    
+    With ws
+        For ctr = LBound(srcArray, 1) To UBound(srcArray, 1)
+            strToReplace = destArray(ctr)
+            strReplacementString = srcArray(ctr)
+            .range(rng.Address).Replace strToReplace, strReplacementString
+        Next ctr
+    End With
+    
+End Function
+
+
+Function FilterThenCopySheet(srcWb As Workbook, srcSh As Worksheet, varCriteria As Variant, colCriteria As Long, _
+    Optional strDestWsName As String, Optional varCriteria2 As Variant, Optional colCriteria2 As Long, Optional lastRowRefCol As Long = 1) As Worksheet
+    
+    On Error GoTo errorline
+    
+    'parameters src sheet, columns in array, dest worksheet name
+    
+    Dim strColName As String, colArrayCtr As Long, srcColNum As Long
+    
+    Dim longDestColCtr As Long
+    
+    Dim firstFilteredRow As Long, lastFilteredRow As Long, longCount As Long
+    
+    Dim draftSh As Worksheet, strCriteria As String, strCriteria2 As String
+    
+    With srcSh
+        
+         .AutoFilterMode = False
+            
+            Select Case True
+                
+                Case IsMissing(varCriteria) = False And IsMissing(varCriteria2) = False
+                    If IsArray(varCriteria) Then
+                        
+                        If UBound(varCriteria, 1) > 0 Then
+                            .UsedRange.AutoFilter colCriteria, Criteria1:=varCriteria, Operator:=xlFilterValues
+                        Else
+                            strCriteria = CStr(varCriteria(0))
+                            
+                            If strCriteria = "Just Copy" Then GoTo CopyLine
+                            
+                            .UsedRange.AutoFilter colCriteria, Criteria1:=strCriteria, Operator:=xlFilterValues
+                        End If
+                        
+                    Else
+                        .UsedRange.AutoFilter colCriteria, Criteria1:=CStr(varCriteria), Operator:=xlFilterValues
+                    End If
+                    
+                    If IsArray(varCriteria2) Then
+                        
+                        If UBound(varCriteria2, 1) > 0 Then
+                            .UsedRange.AutoFilter colCriteria2, Criteria1:=varCriteria2, Operator:=xlFilterValues
+                        Else
+                            strCriteria2 = CStr(varCriteria2(0))
+                            .UsedRange.AutoFilter colCriteria2, Criteria1:=strCriteria2, Operator:=xlFilterValues
+                        End If
+                    Else
+                        .UsedRange.AutoFilter colCriteria2, Criteria1:=CStr(varCriteria2), Operator:=xlFilterValues
+                    End If
+                                    
+                Case IsMissing(varCriteria) = False And IsMissing(varCriteria2)
+                    
+                    If IsArray(varCriteria) Then
+                        
+                        If UBound(varCriteria, 1) > 0 Then
+                            .UsedRange.AutoFilter colCriteria, Criteria1:=varCriteria, Operator:=xlFilterValues
+                        Else
+                            strCriteria = CStr(varCriteria(0))
+                            .UsedRange.AutoFilter colCriteria, Criteria1:=strCriteria, Operator:=xlFilterValues
+                        End If
+                        
+                    Else
+                        
+                        If varCriteria = "Just Copy" Then strCriteria = varCriteria: GoTo CopyLine
+                    
+                        .UsedRange.AutoFilter colCriteria, Criteria1:=CStr(varCriteria), Operator:=xlFilterValues
+                    End If
+                    
+            End Select
+                               
+            firstFilteredRow = ExlHandler.GetFirstFilteredRow(srcSh)
+            
+            If firstFilteredRow > 0 Then
+                .Activate
+                .Cells(firstFilteredRow, lastRowRefCol).Select  'investment manager column
+                lastFilteredRow = Selection.End(xlDown).row
+    
+                If lastFilteredRow > .Cells.Rows.Count - 5 Then lastFilteredRow = firstFilteredRow
+    
+    
+                longCount = WorksheetFunction.Subtotal(3, .range(.Cells(firstFilteredRow, lastRowRefCol), .Cells(lastFilteredRow, lastRowRefCol)))
+                
+                If longCount > 1 Then
+
+CopyLine:
+                    
+                    If strCriteria = "Just Copy" Then
+                        srcSh.AutoFilterMode = False
+                        firstFilteredRow = 1
+                        lastFilteredRow = .UsedRange.Rows.Count
+                    End If
+                  
+                    Application.DisplayAlerts = False
+                    
+                    srcWb.Sheets.Add
+                    
+                  Set draftSh = ActiveSheet
+                    .range(.Cells(1, 1), .Cells(1, .UsedRange.Columns.Count)).Copy
+                    draftSh.Cells(1, 1).Select
+                    ActiveSheet.Paste
+                                        
+                    .range(.Cells(firstFilteredRow, 1), .Cells(lastFilteredRow, .UsedRange.Columns.Count)).Copy
+                    draftSh.Cells(2, 1).Select
+                    ActiveSheet.Paste
+                                                            
+                    Application.CutCopyMode = False
+                    Application.DisplayAlerts = True
+                    
+                    If strDestWsName <> vbNullString Then draftSh.Name = strDestWsName
+                    
+                    Set FilterThenCopySheet = draftSh
+                    
+                End If
+                                            
+        End If  'end of condition checking if there are filtered cells
+        .AutoFilterMode = False
+    End With
+    
+    Exit Function
+errorline:
+    ErrorHandler.ErrorHandler "Error while filtering then copying sheet. " & vbNewLine & vbNewLine & _
+        "Source worksheet: " & srcSh.Name & vbNewLine & _
+        "Destination sheet: " & draftSh.Name
+        
+    
+End Function
+
+Function InsertSpecialTotalRow(destWb As Workbook, destWs As Worksheet, srcWb As Workbook, srcWs As Worksheet, _
+    Optional blnIsPriv As Boolean, Optional blnIsUnallo As Boolean)
+    Dim destLastRow As Long, srcLastRow As Long, destPlotRow As Long, destLastRankRow As Long
+    
+    On Error GoTo errorline
+    
+    srcLastRow = ExlHandler.FindRow(srcWb, srcWs, srcWs.UsedRange, "TOTAL", xlWhole)
+    
+    With destWs
+        destLastRow = ExlHandler.FindRow(destWb, destWs, .UsedRange, "TOTAL", xlWhole)
+        destPlotRow = destLastRow
+                
+        .Rows(destLastRow).Insert (xlDown)
+        destLastRow = destLastRow + 1
+        destLastRankRow = .Cells(destPlotRow, 1).End(xlUp).row
+        
+        .range(.Cells(destPlotRow, 1), .Cells(destPlotRow, .UsedRange.Columns.Count)).Value = _
+            srcWs.range(srcWs.Cells(srcLastRow, 1), srcWs.Cells(srcLastRow, .UsedRange.Columns.Count)).Value
+        
+        .range(.Cells(destLastRankRow, 1), .Cells(destLastRankRow, .UsedRange.Columns.Count)).Copy
+        .range(.Cells(destPlotRow, 1), .Cells(destPlotRow, .UsedRange.Columns.Count)).PasteSpecial xlPasteFormats
+        
+        If blnIsPriv = True Then
+            .Cells(destPlotRow, 2).Value = "Private Investors"
+            '.range(.Cells(destPlotRow, 3), .Cells(destPlotRow, 5)).ClearContents
+        End If
+        
+        If blnIsUnallo = True Then
+            .Cells(destPlotRow, 2).Value = "Unallocated"
+            '.range(.Cells(destPlotRow, 3), .Cells(destPlotRow, 5)).ClearContents
+        End If
+        
+        'Update Total Row
+        Dim totalRowColCtr As Long
+        'destLastRow = destLastRow + 1
+        For totalRowColCtr = 1 To .UsedRange.Columns.Count
+            If .Cells(destLastRow, totalRowColCtr).Value <> vbNullString And IsNumeric(.Cells(destLastRow, totalRowColCtr).Value) Then
+                .Cells(destLastRow, totalRowColCtr).Value = .Cells(destLastRow, totalRowColCtr).Value + .Cells(destPlotRow, totalRowColCtr).Value
+            End If
+        Next totalRowColCtr
+        
+    End With
+    
+    Exit Function
+errorline:
+    ErrorHandler.ErrorHandler "Error while inserting special total rows"
+    
+End Function
+
+
+Function FilterRangeThenDelete(ws As Worksheet, colToFilter As Long, lastRowRefCol As Long, criteriaStr As String, Optional colToFilter2 As Long, Optional criteriaStr2 As String, Optional excludeArray As Variant)
+
+     Dim firstFilteredRow As Long, lastFilteredRow As Long
+
+
+       With ws
+            .AutoFilterMode = False
+            
+            If criteriaStr <> vbNullString Then
+            
+            'If IsEmpty(excludeArray) Or UBound(excludeArray) < 1 Then
+                .UsedRange.AutoFilter colToFilter, Criteria1:=criteriaStr, Operator:=xlFilterValues
+            Else
+                
+                If VarType(excludeArray) = 8204 Then 'check if string
+               
+                    .UsedRange.AutoFilter colToFilter, Criteria1:=Application.WorksheetFunction.Transpose(excludeArray), Operator:=xlFilterValues
+                Else
+                    criteriaStr = excludeArray
+                    .UsedRange.AutoFilter colToFilter, Criteria1:=criteriaStr, Operator:=xlFilterValues
+                End If
+            End If
+            
+            
+            firstFilteredRow = .AutoFilter.range.Offset(1, 0).SpecialCells(xlCellTypeVisible)(1).row
+            .Activate
+            .Cells(firstFilteredRow, lastRowRefCol).Select  'investment manager column
+            lastFilteredRow = Selection.End(xlDown).row
+
+            If lastFilteredRow > .Cells.Rows.Count - 5 Then lastFilteredRow = firstFilteredRow
+
+             Dim longCount As Long
+
+            longCount = WorksheetFunction.Subtotal(3, .range(.Cells(firstFilteredRow, lastRowRefCol), .Cells(lastFilteredRow, lastRowRefCol)))
+
+            If longCount > 1 Then
+                Application.DisplayAlerts = False
+                .range(.Cells(firstFilteredRow, 1), .Cells(lastFilteredRow, .UsedRange.Columns.Count)).Delete
+                Application.DisplayAlerts = True
+            End If
+            
+            
+            
+             If colToFilter2 <> 0 Then
+                FilterRangeThenDelete ws, colToFilter2, lastRowRefCol, criteriaStr2
+            End If
+            
+ End With
+            ws.AutoFilterMode = False
+            
+           
+            
+End Function
+
+Function FormatTotalRow(ws As Worksheet, lastRow As Long, lastCol As Long, startRow As Long, Optional startCol As Long = 5)
+    
+    Dim ctr As Long
+    
+    
+    
+    With ws
+        .Cells(lastRow, 2).Value = "TOTAL"
+        ExlHandler.FormatRange ws, .range(.Cells(lastRow, 1), .Cells(lastRow, lastCol)), RGB(0, 0, 0), 7, "Arial", _
+        border1:=xlEdgeTop, border1style:=xlContinuous, border1weight:=xlThin, border1color:=RGB(0, 0, 0), _
+        border2:=xlEdgeBottom, border2style:=xlContinuous, border2weight:=xlThin, border2color:=RGB(0, 0, 0), blnIsBold:=True
+        
+        .range(.Cells(startRow, 1), .Cells(lastRow - 1, lastCol)).AutoFilter 1, "<>", xlFilterValues
+        
+        Dim firstFilteredRow As Long, lastFilteredRow As Long
+        
+    
+            'firstFilteredRow = .AutoFilter.range.Offset(1, 0).SpecialCells(xlCellTypeVisible)(1).row
+            firstFilteredRow = startRow
+            .Activate
+            .Cells(firstFilteredRow, 5).Select  'investment manager column
+            lastFilteredRow = Selection.End(xlDown).row
+    
+            If lastFilteredRow > .Cells.Rows.Count - 5 Then lastFilteredRow = firstFilteredRow
+    
+             Dim longCount As Long
+    
+            longCount = WorksheetFunction.Subtotal(3, .range(.Cells(firstFilteredRow, 2), .Cells(lastFilteredRow, 2)))
+    
+            If longCount >= 1 Then
+                For ctr = startCol To lastCol - 1
+                    
+                    On Error Resume Next
+                    
+                    If IsNumeric(.Cells(firstFilteredRow, ctr).Value) And .Cells(firstFilteredRow, ctr).Value <> vbNullString Then
+                        .Cells(lastRow, ctr).Value = .Application.WorksheetFunction.Subtotal(9, _
+                        .range(.Cells(firstFilteredRow, ctr), .Cells(lastFilteredRow, ctr)))
+                    End If
+                    
+                     If Err.Number <> 0 Then
+                        ErrorHandler.ErrorHandler "Error while formatting and computing the totals in the consolidated input files. Please check the current input files if there are errors or #N/As in cells."
+                    End If
+                    
+                    On Error GoTo 0
+                    Err.Clear
+                    
+                Next ctr
+            End If
+        .AutoFilterMode = False
+    End With
+End Function
+
 
 
 
