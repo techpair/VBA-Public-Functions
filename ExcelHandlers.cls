@@ -1481,5 +1481,213 @@ Sub RepositionTabs(tabsArray As Variant, destWB As Workbook)
     
 End Sub
 
+Function InsertSpecialTotalRow(destWb As Workbook, destWs As Worksheet, srcWb As Workbook, srcWs As Worksheet, _
+    Optional blnIsPriv As Boolean, Optional blnIsUnallo As Boolean)
+    Dim destLastRow As Long, srcLastRow As Long, destPlotRow As Long, destLastRankRow As Long
+    
+    On Error GoTo errorline
+    
+    srcLastRow = ExlHandler.FindRow(srcWb, srcWs, srcWs.UsedRange, "TOTAL", xlWhole)
+    
+    With destWs
+        destLastRow = ExlHandler.FindRow(destWb, destWs, .UsedRange, "TOTAL", xlWhole)
+        destPlotRow = destLastRow
+                
+        .Rows(destLastRow).Insert (xlDown)
+        destLastRow = destLastRow + 1
+        destLastRankRow = .Cells(destPlotRow, 1).End(xlUp).row
+        
+        .range(.Cells(destPlotRow, 1), .Cells(destPlotRow, .UsedRange.Columns.Count)).Value = _
+            srcWs.range(srcWs.Cells(srcLastRow, 1), srcWs.Cells(srcLastRow, .UsedRange.Columns.Count)).Value
+        
+        .range(.Cells(destLastRankRow, 1), .Cells(destLastRankRow, .UsedRange.Columns.Count)).Copy
+        .range(.Cells(destPlotRow, 1), .Cells(destPlotRow, .UsedRange.Columns.Count)).PasteSpecial xlPasteFormats
+        
+        If blnIsPriv = True Then
+            .Cells(destPlotRow, 2).Value = "Private Investors"
+            '.range(.Cells(destPlotRow, 3), .Cells(destPlotRow, 5)).ClearContents
+        End If
+        
+        If blnIsUnallo = True Then
+            .Cells(destPlotRow, 2).Value = "Unallocated"
+            '.range(.Cells(destPlotRow, 3), .Cells(destPlotRow, 5)).ClearContents
+        End If
+        
+        'Update Total Row
+        Dim totalRowColCtr As Long
+        'destLastRow = destLastRow + 1
+        For totalRowColCtr = 1 To .UsedRange.Columns.Count
+            If .Cells(destLastRow, totalRowColCtr).Value <> vbNullString And IsNumeric(.Cells(destLastRow, totalRowColCtr).Value) Then
+                .Cells(destLastRow, totalRowColCtr).Value = .Cells(destLastRow, totalRowColCtr).Value + .Cells(destPlotRow, totalRowColCtr).Value
+            End If
+        Next totalRowColCtr
+        
+    End With
+    
+    Exit Function
+errorline:
+    ErrorHandler.ErrorHandler "Error while inserting special total rows"
+    
+End Function
 
 
+Function FilterRangeThenDelete(ws As Worksheet, colToFilter As Long, lastRowRefCol As Long, criteriaStr As String, Optional colToFilter2 As Long, Optional criteriaStr2 As String, Optional excludeArray As Variant)
+
+     Dim firstFilteredRow As Long, lastFilteredRow As Long
+
+
+       With ws
+            .AutoFilterMode = False
+            
+            If criteriaStr <> vbNullString Then
+            
+            'If IsEmpty(excludeArray) Or UBound(excludeArray) < 1 Then
+                .UsedRange.AutoFilter colToFilter, Criteria1:=criteriaStr, Operator:=xlFilterValues
+            Else
+                
+                If VarType(excludeArray) = 8204 Then 'check if string
+               
+                    .UsedRange.AutoFilter colToFilter, Criteria1:=Application.WorksheetFunction.Transpose(excludeArray), Operator:=xlFilterValues
+                Else
+                    criteriaStr = excludeArray
+                    .UsedRange.AutoFilter colToFilter, Criteria1:=criteriaStr, Operator:=xlFilterValues
+                End If
+            End If
+            
+            
+            firstFilteredRow = .AutoFilter.range.Offset(1, 0).SpecialCells(xlCellTypeVisible)(1).row
+            .Activate
+            .Cells(firstFilteredRow, lastRowRefCol).Select  'investment manager column
+            lastFilteredRow = Selection.End(xlDown).row
+
+            If lastFilteredRow > .Cells.Rows.Count - 5 Then lastFilteredRow = firstFilteredRow
+
+             Dim longCount As Long
+
+            longCount = WorksheetFunction.Subtotal(3, .range(.Cells(firstFilteredRow, lastRowRefCol), .Cells(lastFilteredRow, lastRowRefCol)))
+
+            If longCount > 1 Then
+                Application.DisplayAlerts = False
+                .range(.Cells(firstFilteredRow, 1), .Cells(lastFilteredRow, .UsedRange.Columns.Count)).Delete
+                Application.DisplayAlerts = True
+            End If
+            
+            
+            
+             If colToFilter2 <> 0 Then
+                FilterRangeThenDelete ws, colToFilter2, lastRowRefCol, criteriaStr2
+            End If
+            
+ End With
+            ws.AutoFilterMode = False
+
+            
+End Function
+
+Function ReplaceKeywordsInSheet(ws As Worksheet, prevKeyword As Variant, newKeyword As Variant)
+    
+    Dim varCtr As Long, strPrevKeyword As String, strNewKeyword As String
+    
+    'This function replaces keywords using arrays. It is a requirement that the arrays have the same sizes.
+    
+    With ws
+        
+        
+        For varCtr = LBound(newKeyword) To UBound(newKeyword)
+            strPrevKeyword = prevKeyword(varCtr)
+            strNewKeyword = newKeyword(varCtr)
+            
+            .Cells.Replace strPrevKeyword, strNewKeyword
+            
+        Next varCtr
+        
+    End With
+    
+End Function
+
+Function FindDateAndFormat(ws As Worksheet, formatMode As String, Optional transferWhere As Long = 0) As Range
+    
+    Dim rngFind As Range, rngWithVals As Range, rngElement As Range, rngFindCol As Long
+    
+    'this function finds a date range and returns a date range, it's optional to format the found range
+    
+    With ws
+        .Activate
+        Set rngWithVals = .UsedRange
+        
+        For Each rngElement In rngWithVals
+            If IsDate(rngElement.Value) Then
+                'do function
+                                
+                Set rngFind = rngElement
+                rngFindCol = rngFind.Column
+                
+                Select Case formatMode
+                    Case "unmerge"  'this will unmerge all the rows starting from the start of the found range up to the end
+                        .Range(.Cells(rngFind.row, rngFindCol), .Cells(rngFind.row, .UsedRange.Columns.Count)).UnMerge
+                    Case "unmerge&transfer"
+                        .Range(.Cells(rngFind.row, rngFindCol), .Cells(rngFind.row, .UsedRange.Columns.Count)).UnMerge
+                        .Cells(rngFind.row, rngFindCol).Cut
+                        .Cells(rngFind.row, rngFindCol + transferWhere).Select
+                        ActiveSheet.Paste
+                            'transferWhere = 0
+                            .Range(.Cells(rngFind.row, rngFindCol + transferWhere), _
+                                .Cells(rngFind.row, .UsedRange.Columns.Count)).Merge
+                    
+                        
+                End Select
+                
+                
+                Exit Function
+            End If
+        Next rngElement
+        
+    End With
+    
+End Function
+
+
+Function CheckDelimiterFormat(wbToCheck As Workbook, wsToCheck As Worksheet, strHeaderKeyword As String, strDelimiter As String, _
+    Optional checkLimitRowCount As Long, Optional IncludeHdrRow As Boolean = False, Optional IncludeEndRow As Boolean = False)
+    
+    Dim startRow As Long, endRow As Long, hdrRow As Long, hdrCol As Long, ctr As Long, strCheck As String
+    
+    With wsToCheck
+        hdrRow = FindRow(wbToCheck, wsToCheck, .UsedRange, strHeaderKeyword)
+        hdrCol = FindColumn(strHeaderKeyword, hdrRow)
+        
+        
+        If IncludeHdrRow = True Then
+            startRow = hdrRow
+        Else
+            startRow = hdrRow + 1
+        End If
+        
+        endRow = .Cells(startRow, hdrCol).End(xlDown).row
+        
+        If IncludeEndRow = False Then endRow = endRow - 1
+        
+        If checkLimitRowCount = 0 Then checkLimitRowCount = endRow
+        
+        For ctr = startRow To checkLimitRowCount
+            
+            strCheck = .Cells(ctr, hdrCol).Value
+            
+            If InStr(1, strCheck, strDelimiter, vbTextCompare) = 0 Then
+                
+                MsgBox "The file " & wbToCheck.Name & " with the worksheet " & wsToCheck.Name & " doesn't have the delimiters format of '" & _
+                    strDelimiter & "' In column " & GetColumnLetter(CInt(hdrCol)) & ". Please choose the correct input file and try again."
+                
+                wbToCheck.Activate
+                wsToCheck.Activate
+                
+                End
+            End If
+            
+        Next ctr
+        
+    End With
+    
+    'This function checks if a specific column have the required delimiters in which the programmer can set up to which row.
+    
+End Function
