@@ -8,6 +8,47 @@ Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
 
+Function ChangeChartColor(wb As Workbook, ws As Worksheet, chartName As String, Optional paramColors As Variant = Empty)
+'
+' ChangeChartColor Macro
+'
+
+'
+    On Error Resume Next
+    
+    wb.Activate
+    ws.Activate
+    
+    Dim defaultArrayColors As Variant, finalColors As Variant
+    
+    defaultArrayColors = Array(RGB(0, 84, 159), RGB(0, 152, 195), RGB(183, 2, 110), RGB(247, 142, 85), RGB(2, 195, 98), _
+        RGB(102, 102, 102), RGB(147, 169, 207), RGB(255, 79, 79))
+    
+    If IsEmpty(paramColors) Then
+        finalColors = defaultArrayColors
+    Else
+        finalColors = paramColors
+    End If
+    
+    ws.ChartObjects(chartName).Activate
+    
+    Dim seriesCtr As Long
+    
+    For seriesCtr = 1 To ActiveChart.SeriesCollection(1).Points.Count
+         
+         ActiveChart.SeriesCollection(1).Points(seriesCtr).Select
+        With Selection.Format.Fill
+            .Visible = msoTrue
+            .ForeColor.RGB = finalColors(seriesCtr - 1)
+            .Transparency = 0
+            .Solid
+        End With
+        
+    Next seriesCtr
+    
+End Function
+
+
 Function AlignLeft(rng As range)
 
 '***********************************************************************************
@@ -1691,3 +1732,4 @@ Function CheckDelimiterFormat(wbToCheck As Workbook, wsToCheck As Worksheet, str
     'This function checks if a specific column have the required delimiters in which the programmer can set up to which row.
     
 End Function
+
