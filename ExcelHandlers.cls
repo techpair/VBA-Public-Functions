@@ -1733,3 +1733,32 @@ Function CheckDelimiterFormat(wbToCheck As Workbook, wsToCheck As Worksheet, str
     
 End Function
 
+Function EditTextbox(ws As Worksheet, strTxtBxNm As String, strText As String, Optional longTop As Long, _
+    Optional longLeft As Long, Optional boldUpToWhere As Integer, Optional fontSize1 As Integer, _
+    Optional fontSize1UptoWhere As Integer, Optional fontSize2 As Integer, Optional fontSize2StartWhere As Integer, _
+    Optional fontSize2UptoWhere As Integer)
+
+    With ws
+        With .Shapes(strTxtBxNm)
+            .TextFrame.Characters.Text = strText
+        
+            If longTop <> 0 Then .Top = longTop
+            If longLeft <> 0 Then .Left = longLeft
+            
+            .TextFrame.Characters.Font.Bold = False
+            
+            If boldUpToWhere <> 0 Then .TextFrame.Characters(1, boldUpToWhere).Font.Bold = True
+            
+            If fontSize1 <> 0 And fontSize1UptoWhere <> 0 Then
+                .TextFrame.Characters(1, fontSize1UptoWhere).Font.Size = fontSize1
+            End If
+            
+            If fontSize2 <> 0 And fontSize2UptoWhere <> 0 And fontSize2StartWhere <> 0 Then
+                .TextFrame.Characters(fontSize2StartWhere, fontSize2UptoWhere).Font.Size = fontSize2
+            End If
+            
+        End With
+        
+    End With
+
+End Function
