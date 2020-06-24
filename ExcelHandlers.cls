@@ -1762,3 +1762,49 @@ Function EditTextbox(ws As Worksheet, strTxtBxNm As String, strText As String, O
     End With
 
 End Function
+
+Sub FindColumnsThenRemove(wsSource, strFind As String)
+
+Dim rangeFindFF As Range, columnCtr As Long
+
+                
+                With wsSource
+                  
+                    .Activate
+                    .AutoFilterMode = False
+                    Set rangeFindFF = .UsedRange.Find(strFind, , , xlWhole)
+                    
+                    If Not rangeFindFF Is Nothing Then
+                    
+                        columnCtr = rangeFindFF.Column
+                        
+                        Do
+                            
+                            'If .Cells(rangeFindFF.row, rangeFindFF.Column).MergeCells = True Then
+                                '.Columns(rangeFindFF.Column).UnMerge
+                                '.Range(.Cells(rangeFindFF.row, rangeFindFF.Column), .Cells(rangeFindFF.row, rangeFindFF.Column + 1)).EntireColumn.Delete
+                            'Else
+                                '.Cells(rangeFindFF.row, rangeFindFF.Column).EntireColumn.Delete
+                            'End If
+                            .Columns(rangeFindFF.Column).EntireColumn.Delete
+                            
+                            Set rangeFindFF = .UsedRange.Find(strFind, , , xlWhole)
+                            
+                            If rangeFindFF Is Nothing Then
+                            
+                                GoTo DoneFinding
+                                
+                            
+                            End If
+                    
+                        Loop While rangeFindFF.Column <> columnCtr
+                    
+  
+                    End If
+                    
+                End With
+                
+DoneFinding:
+            
+
+End Sub
