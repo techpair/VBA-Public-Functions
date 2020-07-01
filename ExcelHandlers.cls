@@ -1808,3 +1808,13 @@ DoneFinding:
             
 
 End Sub
+
+Function IsWorkbookProtected(wb As Workbook) As Boolean
+
+With wb
+    
+   IsWorkbookProtected = (.ProtectWindows Or .ProtectStructure)
+    
+End With
+
+End Function
