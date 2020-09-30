@@ -1818,3 +1818,103 @@ With wb
 End With
 
 End Function
+
+Function showNonZeroOnly(ws As Worksheet, rngToPlot As Range)
+    
+    Dim rng As Range, sEntry As String, dEntryNumber As Double, arr As Variant, longFirstInst As Long
+    Dim strRemovedZero As String, strKeywordForPos As String, longKwordPos As Long, strNumFmt As String
+    Dim decCtr As Long, decSum As Double
+    
+    With ws
+        For Each rng In rngToPlot
+                If IsNumeric(rng) Then
+                    sEntry = rng.Value
+                    dEntryNumber = CDbl(sEntry)
+
+                    arr = Split(sEntry, ".")
+                    If UBound(arr) = 1 Then
+                        ' Change NumberFormat in accordance with
+                        ' the number of digits after the decimal point
+                        'rng.NumberFormat = "0." & String(Len(arr(1)), "0")
+                       
+                       'FIND(MID(SUBSTITUTE(I171,0,""),2,1),I171)-1
+                       
+                       'substitute removes the zeros to cut down the leading zeros of the string of the keyword
+                       'mid gets the keyword to find to get the starting position
+                       'find gets the starting position
+                       
+                       strNumFmt = "10"
+                            
+                       strRemovedZero = Replace(Replace(rng.Value, "0", ""), ".", "") 'Application.WorksheetFunction.Substitute(rng.Value, "0", "")
+                       strKeywordForPos = Mid(strRemovedZero, 1, 1)
+                       
+                       Dim wordLength As String
+                       
+                       wordLength = Len(rng.Value)
+                            
+                       
+                            
+                            rng.NumberFormat = "@"
+                            rng.FormulaR1C1 = rng.FormulaR1C1
+                       
+                            
+                            rng.NumberFormat = "0." & CStr(CLng(strNumFmt) ^ (wordLength - 2))    '0.0034
+                            
+                            longKwordPos = Application.WorksheetFunction.Find(strKeywordForPos, rng.Text) - 4
+                            
+                            If longKwordPos < 2 Then longKwordPos = 2
+                            
+                            
+                            rng.NumberFormat = "0." & Replace(CStr(CLng(strNumFmt) ^ (longKwordPos)), "1", "") & "%"   '0.0034
+                            rng.FormulaR1C1 = rng.FormulaR1C1
+                            
+                            On Error Resume Next
+                            'for unchanged exponents
+                            If Application.WorksheetFunction.Find("E", rng.Text) > 0 Then
+                                                               
+                                If Err.Number = 0 Then
+                                    rng.Style = "Percent"
+                                        'rng.NumberFormat = "0." & CStr(CLng(strNumFmt) ^ (CLng(Split(rng.Text, "E-")(1)) - 2)) & "&"
+                                        decSum = 0
+        
+                                        For decCtr = 1 To wordLength
+        
+                                            If Mid(rng.Text, decCtr, 1) <> "." And IsNumeric(Mid(rng.Text, decCtr, 1)) Then
+                                                decSum = decSum + CDbl(Replace(rng.Text, "%", ""))
+        
+                                                If decSum > 0 Then
+                                                    Exit For
+                                                Else
+                                                    rng.NumberFormat = "0." & Replace(CStr(CLng(strNumFmt) ^ (decCtr)), "1", "") & "%"
+                                                    'rng.NumberFormat = "0." & Replace(CStr(CLng(strNumFmt) ^ (decCtr)), "1", "") & "%"
+                                                End If
+                                            Else
+                                                rng.NumberFormat = "0." & Replace(CStr(CLng(strNumFmt) ^ (decCtr)), "1", "") & "%"
+                                            End If
+        
+                                        Next decCtr
+        
+                                    On Error GoTo 0
+                                    Err.Clear
+                                End If
+                            End If
+                            
+                            'for 0.10
+
+                            If Mid(rng.Text, Len(rng.Text) - 1, 1) = 0 And rng.NumberFormat <> "0.00%" And _
+                                Mid(rng.Text, Len(rng.Text) - 2, 1) > 0 Then
+                                
+                                rng.NumberFormat = Mid(CStr(rng.NumberFormat), 1, Len(CStr(rng.NumberFormat)) - 2) & "%"
+                                
+                            End If
+                                
+                            
+                    End If
+                End If
+        Next rng
+    End With
+
+End Function
+
+
+
