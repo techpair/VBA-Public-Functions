@@ -1916,5 +1916,68 @@ Function showNonZeroOnly(ws As Worksheet, rngToPlot As Range)
 
 End Function
 
+Function computeSumOfGroup_double(wb As Workbook, ws As Worksheet, strStartRow As String, strStartCol As String, _
+    strSumCol As String, Optional rng As Range, Optional preLongSumCol As Long = 0, Optional preLongSumColAdder As Long)
+    
+    Dim longStartRow As Long, longStartCol As Long, longSumCol As Long
+    Dim ctr As Long, grpStartRow As Long, grpEndRow As Long
+    
+    With ws
+        
+        If rng Is Nothing Then Set rng = .UsedRange
+        
+        longStartRow = SearchKeywordRow(wb, ws, strStartRow, .UsedRange, xlWhole) + 1
+        longStartCol = SearchKeywordCol(wb, ws, strStartCol, .UsedRange, xlWhole)
+        
+        If preLongSumCol = 0 Then
+        longSumCol = SearchKeywordCol(wb, ws, strSumCol, .Range(rng.Address), xlWhole)
+        Else
+            longSumCol = preLongSumCol
+        End If
+        
+        ctr = longStartRow
+        
+        For ctr = longStartRow To .UsedRange.Rows.Count
+            
+            grpStartRow = ctr
+            
+            If .Cells(ctr + 1, longStartCol).Value <> vbNullString Then
+                grpEndRow = ctr
+                grpStartRow = ctr
+            Else    'if next row is blank
+                grpEndRow = .Cells(grpStartRow, longStartCol).End(xlDown).row - 1
+            End If
+            
+            If grpEndRow > grpStartRow And .Cells(grpStartRow, longStartCol) <> "TOTAL" Then
+                'sum-up group
+                
+                On Error Resume Next
+                                
+                    .Cells(grpStartRow, longSumCol).Value = _
+                    Application.WorksheetFunction.Sum(.Range(.Cells(grpStartRow + 1, longSumCol), .Cells(grpEndRow, longSumCol)))
+                    
+                    If preLongSumColAdder = 0 Then preLongSumColAdder = 1
+                    
+                    .Cells(grpStartRow, longSumCol + preLongSumColAdder).Value = _
+                    Application.WorksheetFunction.Sum(.Range(.Cells(grpStartRow + 1, longSumCol + preLongSumColAdder), .Cells(grpEndRow, longSumCol + preLongSumColAdder)))
+                    
+                    If Err.Number > 0 Then
+                        MsgBox "Cannot sum-up this column number: " & strSumCol
+                    End If
+                    
+                On Error GoTo 0
+                Err.Clear
+                
+            End If
+            
+            ctr = grpEndRow
+            
+nextCtrLine:
+            
+        Next
+        
+    End With
+    
+End Function
 
 
