@@ -1981,3 +1981,18 @@ nextCtrLine:
 End Function
 
 
+Function ChangeWidthOrAutofit(wb As Workbook, ws As Worksheet, widthDbl As Double, refCol As Long, _
+    startRow As Long, lastrow As Long)
+    
+    Dim hasRow As Long
+    
+    hashRow = FindRow(wb, ws, .Range(.Cells(startRow, refCol), .Cells(lastrow, refCol)), "*#", xlWhole)
+    
+    With ws
+        .Columns(refCol).ColumnWidth = widthDbl
+        If hasRow > 0 Then
+            .Columns(refCol).AutoFit
+        End If
+    
+    End With
+End Function
