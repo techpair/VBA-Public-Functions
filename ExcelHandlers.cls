@@ -1996,3 +1996,84 @@ Function ChangeWidthOrAutofit(wb As Workbook, ws As Worksheet, widthDbl As Doubl
     
     End With
 End Function
+
+Function wsFindDiffMatrix(srcWb As Workbook, srcWs As Worksheet, destWb As Workbook, destWs As Worksheet, srcHdrRow As Long, _
+    destHdrRow As Long, destLrow As Long, destHdrColStart As Long, destHdrColEnd As Long, destRefCol, _
+    destRowStart As Long, whatColor As Double)
+
+    Dim destHdrColCtr As Long, srcRefCol As Long, srcRefRow As Long, destRowCtr As Long, strDest _
+        As String, strSrcNm As String, strDestNm As String
+    
+    With destWs
+        
+            For destRowCtr = destRowStart To destLrow
+                
+                For destHdrColCtr = destHdrColStart To destHdrColEnd
+                    strDest = .Cells(destRowCtr, destRefCol).Value
+                    strDestNm = .Cells(destHdrRow, destHdrColCtr).Value
+                    
+                    If Trim(strDest) <> vbNullString And Trim(strDestNm) <> vbNullString Then
+                        'get coordinates
+                        
+                        With srcWs
+                            srcRefRow = FindRow(srcWb, srcWs, .UsedRange, strDest, xlPart)
+                            
+                            If srcRefRow <> 0 Then
+                                
+                                srcRefCol = FindColumn(srcWb, srcWs, .UsedRange, strDestNm, xlWhole)
+                                
+                                If srcRefCol <> 0 Then
+                                    
+                                    If IsNumeric(.Cells(srcRefRow, srcRefCol).Value) And IsNumeric(destWs.Cells(destRowCtr, destHdrColCtr).Value) Then
+                                    
+                                    'compare numbers
+                                    If .Cells(srcRefRow, srcRefCol).Value > _
+                                        destWs.Cells(destRowCtr, destHdrColCtr).Value Then
+                                        'color yellow
+                                        
+                                        If destWs.Cells(destRowCtr, destHdrColCtr).Value <> 0 Then
+                                        
+                                        With destWs.Cells(destRowCtr, destHdrColCtr).Interior
+                                            .Pattern = xlSolid
+                                            .PatternColorIndex = xlAutomatic
+                                            .Color = whatColor
+                                            .TintAndShade = 0
+                                            .PatternTintAndShade = 0
+                                        End With
+                                        
+                                        Else
+                                            destWs.Cells(destRowCtr, destHdrColCtr).NumberFormat = "0.00"
+                                            
+                                        End If
+                                        
+                                    Else
+                                        Exit For
+                                    End If
+                                    
+                                    Else
+                                        Exit For
+                                    End If
+                                    
+                                End If
+                                
+                            Else
+                                Exit For
+                            End If
+                            
+                        End With
+                    Else
+                        Exit For
+                    End If
+                    
+                Next destHdrColCtr
+                
+            Next destRowCtr
+        
+        
+        
+        
+    End With
+    
+End Function
+
+
