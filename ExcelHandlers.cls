@@ -2076,4 +2076,88 @@ Function wsFindDiffMatrix(srcWb As Workbook, srcWs As Worksheet, destWb As Workb
     
 End Function
 
+Function CreateConcatAndLookupValNonContigOutput(wb As Workbook, ws As Worksheet, refOutColBasis As Long, refLookupColBasis As Long, _
+    ByRef ConcatCol As Long, ByRef outCol As Long, ByRef sRow As Long, ByRef lrow As Long, arrayStrConcat As Variant, _
+    strStartRowHdr As String, Optional strRefLastRowGetter As String, Optional outColPos As Long)
+    
+    Dim arrayStrConcElem As Variant, strFormula As String
+    
+    With ws
+    'initiate variables
+        sRow = FindRow(wb, ws, .UsedRange, strStartRowHdr, xlWhole)
+        
+        'get last row if it's not inputted in the parameter
+        If lrow = 0 Then
+            'check if a keyword is inputted as reference to get the last row-
+            'using a keyword representing the column with non-contiguous cells
+            If strRefLastRowGetter <> vbNullString Then
+                'if keyword was found, use it to get the reference column then to finally get the last row
+                lrow = .Cells(sRow, FindColumn(wb, ws, .UsedRange, strRefLastRowGetter, xlWhole)).End(xlDown).Row
+                
+                'if last row is too big just get the usedrange last row
+                If lrow > .Cells.Rows.Count - 5 Then lrow = .UsedRange.Rows.Count
+            Else
+                'if no inputted last row and no keyword inputted, just use the usedrange last row
+                lrow = .UsedRange.Rows.Count
+            End If
+        End If
+        
+        'if the column where there is non-contiguous column is 0 then the macro will just use the first column
+        If refOutColBasis = 0 Then refOutColBasis = 1
+        
+        'if plot column is not defined, plot to the last column
+        If outColPos = 0 Then outColPos = .Cells(sRow, .Cells.Columns.Count).End(xlToLeft).Column + 1
+        
+        If ConcatCol = 0 Then
+            'set the plot columns
+            ConcatCol = outColPos
+        End If
+        
+        If outCol = 0 Then
+            outCol = outColPos + 1
+        End If
+        
+        'plot formulas
+        
+        'plot concat formula based on array of column names
+        
+        For Each arrayStrConcElem In arrayStrConcat
+            If strFormula = vbNullString Then
+                
+                If CStr(arrayStrConcElem) <> vbNullString Then
+                
+                    strFormula = _
+                       .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False)
+                Else
+                    strFormula = _
+                       .Cells(sRow + 1, refLookupColBasis).Address(False, False)
+                       
+                End If
+                
+            Else
+                
+                If CStr(arrayStrConcElem) <> vbNullString Then
+                    strFormula = strFormula & " & " & _
+                    .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False)
+                Else
+                    strFormula = strFormula & " & " & _
+                    .Cells(sRow + 1, refLookupColBasis).Address(False, False)
+                End If
+                
+            End If
+        Next arrayStrConcElem
+        
+        .Range(.Cells(sRow + 1, ConcatCol), .Cells(lrow, ConcatCol)) = "=IF(" & .Cells(sRow + 1, refOutColBasis).Address(False, False) & "=" & """""" & "," & strFormula & "," & """""" & ")"
+        
+        'plot output formula to solve non-contiguous output column
+        '=IF(B5<>"",B5,P4)
+        .Range(.Cells(sRow + 1, outCol), .Cells(lrow, outCol)) = "=IF(" & .Cells(sRow + 1, refOutColBasis).Address(False, False) & _
+            "<>" & """""" & "," & .Cells(sRow + 1, refOutColBasis).Address(False, False) & "," & _
+             .Cells(sRow, outCol).Address(False, False) & ")"
+        
+        .Range(.Cells(sRow + 1, ConcatCol), .Cells(lrow, outCol)).Value = .Range(.Cells(sRow + 1, ConcatCol), .Cells(lrow, outCol)).Value
+        
+    End With
+    
+End Function
 
