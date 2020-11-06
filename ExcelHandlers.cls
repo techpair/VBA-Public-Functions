@@ -2078,9 +2078,9 @@ End Function
 
 Function CreateConcatAndLookupValNonContigOutput(wb As Workbook, ws As Worksheet, refOutColBasis As Long, refLookupColBasis As Long, _
     ByRef ConcatCol As Long, ByRef outCol As Long, ByRef sRow As Long, ByRef lrow As Long, arrayStrConcat As Variant, _
-    strStartRowHdr As String, Optional strRefLastRowGetter As String, Optional outColPos As Long)
+    strStartRowHdr As String, Optional strRefLastRowGetter As String, Optional outColPos As Long, Optional concatStyle As String)
     
-    Dim arrayStrConcElem As Variant, strFormula As String
+    Dim arrayStrConcElem As Variant, strFormula As String, strFormula2 As String
     
     With ws
     'initiate variables
@@ -2123,31 +2123,84 @@ Function CreateConcatAndLookupValNonContigOutput(wb As Workbook, ws As Worksheet
         
         For Each arrayStrConcElem In arrayStrConcat
             If strFormula = vbNullString Then
-                
+                'if formula builder is not initialized
                 If CStr(arrayStrConcElem) <> vbNullString Then
-                
                     strFormula = _
                        .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False)
+                    
                 Else
                     strFormula = _
                        .Cells(sRow + 1, refLookupColBasis).Address(False, False)
                        
                 End If
                 
-            Else
-                
+                'if formula builder is not initialized
                 If CStr(arrayStrConcElem) <> vbNullString Then
+                    strFormula2 = _
+                       .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False)
+                    
+                Else
+                    strFormula2 = _
+                       .Cells(sRow + 1, refOutColBasis).Address(False, False)
+                       
+                End If
+                
+            Else
+                'if formula builder is initialized
+                If CStr(arrayStrConcElem) <> vbNullString Then
+                    'if formula in array is not blank
+                    
+                    If concatStyle = vbNullString Then  'if there is no concat style
                     strFormula = strFormula & " & " & _
                     .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False)
+                    ElseIf concatStyle = "()" Then 'if it is parenthesis style
+                        strFormula = strFormula & " & " & _
+                    """ (""" & " & " & .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False) & " & " & """)"""
+                    
+                    End If
                 Else
+                    'if formula in array is blank
+                    
+                    If concatStyle = vbNullString Then  'if there is no concat style
                     strFormula = strFormula & " & " & _
                     .Cells(sRow + 1, refLookupColBasis).Address(False, False)
+                    ElseIf concatStyle = "()" Then 'if it is parenthesis style
+                    strFormula = strFormula & " & " & _
+                    """ (""" & " & " & .Cells(sRow + 1, refLookupColBasis).Address(False, False) & " & " & """)"""
+                    End If
+                    
+                End If
+                
+                
+                'if formula builder is initialized
+                If CStr(arrayStrConcElem) <> vbNullString Then
+                    'if formula in array is not blank
+                    
+                    If concatStyle = vbNullString Then  'if there is no concat style
+                    strFormula2 = strFormula2 & " & " & _
+                    .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False)
+                    ElseIf concatStyle = "()" Then 'if it is parenthesis style
+                        strFormula2 = strFormula2 & " & " & _
+                    """ (""" & " & " & .Cells(sRow + 1, FindColumn(wb, ws, .UsedRange, CStr(arrayStrConcElem), xlWhole)).Address(False, False) & " & " & """)"""
+                    
+                    End If
+                Else
+                    'if formula in array is blank
+                    
+                    If concatStyle = vbNullString Then  'if there is no concat style
+                    strFormula2 = strFormula2 & " & " & _
+                    .Cells(sRow + 1, refOutColBasis).Address(False, False)
+                    ElseIf concatStyle = "()" Then 'if it is parenthesis style
+                    strFormula2 = strFormula2 & " & " & _
+                    """ (""" & " & " & .Cells(sRow + 1, refOutColBasis).Address(False, False) & " & " & """)"""
+                    End If
+                    
                 End If
                 
             End If
         Next arrayStrConcElem
         
-        .Range(.Cells(sRow + 1, ConcatCol), .Cells(lrow, ConcatCol)) = "=IF(" & .Cells(sRow + 1, refOutColBasis).Address(False, False) & "=" & """""" & "," & strFormula & "," & """""" & ")"
+        .Range(.Cells(sRow + 1, ConcatCol), .Cells(lrow, ConcatCol)) = "=IF(" & .Cells(sRow + 1, refOutColBasis).Address(False, False) & "=" & """""" & "," & strFormula & "," & strFormula2 & ")"
         
         'plot output formula to solve non-contiguous output column
         '=IF(B5<>"",B5,P4)
@@ -2160,4 +2213,3 @@ Function CreateConcatAndLookupValNonContigOutput(wb As Workbook, ws As Worksheet
     End With
     
 End Function
-
