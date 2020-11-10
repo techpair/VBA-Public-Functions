@@ -1346,6 +1346,40 @@ Function FindFirstDate(wb As Workbook, ws As Worksheet, keyword As String, Optio
     
 End Function
 
+Function deleteBlankColumnsInRange(wb As Workbook, ws As Worksheet, startRow As Long, lastRow As Long)
+    Dim xEndCol As Long
+    Dim I As Long
+    Dim xDel As Boolean
+    
+    On Error Resume Next
+    
+    wb.Activate
+    ws.Activate
+    
+ With ws
+    xEndCol = .Range(.Cells(startRow, 1), .Cells(lastRow, .UsedRange.Columns.Count)).Find("*", SearchOrder:=xlByColumns, SearchDirection:=xlPrevious).Column
+    
+    If xEndCol = 0 Then
+        'MsgBox "There is no data on """ & ws.Name & """ .", vbExclamation
+        'Exit Function
+    End If
+    
+    For I = xEndCol To 1 Step -1
+        If Application.WorksheetFunction.CountA(.Range(.Cells(startRow, I), .Cells(lastRow, I))) <= 1 Then
+            Columns(I).Delete
+            xDel = True
+        End If
+    Next
+    
+'    If xDel Then
+'        MsgBox "All blank and column(s) with only a header row have now been deleted.", vbInformation, "Kutools for Excel"
+'    Else
+'        MsgBox "There are no Columns to delete as each one has more data (rows) than just a header.", vbExclamation, "Kutools for Excel"
+'    End If
+    
+End With
+End Function
+
 
 
 Sub DeleteChartsExcept(ws As Worksheet, strChartNm As String, Optional strChrtNm2 As String, Optional strChrtNm3 As String, Optional strChrtNm4 As String)
