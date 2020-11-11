@@ -2247,3 +2247,35 @@ Function CreateConcatAndLookupValNonContigOutput(wb As Workbook, ws As Worksheet
     End With
     
 End Function
+
+
+Function sumUpRangesRowNumeric(wb As Workbook, ws As Worksheet, rngToSumUp As Range, colToCheck As Long, _
+    rowToPlot As Long, strCriteria As String)
+    
+    Dim startRow As Long, lastRow As Long, startCol As Long, lastCol As Long, coltr As Long
+    
+    startRow = rngToSumUp.Row
+    lastRow = rngToSumUp.Row + rngToSumUp.Rows.Count - 1
+    startCol = rngToSumUp.Column
+    lastCol = rngToSumUp.Column + rngToSumUp.Columns.Count - 1
+    
+    With ws
+        
+        .Range(.Cells(rowToPlot, startCol), .Cells(rowToPlot, lastCol)) = _
+            "=IF(ISNUMBER(" & .Cells(startRow, startCol).Address(False, False) & ")," & _
+            "SUMIF(" & .Range(.Cells(startRow, colToCheck), .Cells(lastRow, colToCheck)).Address(True, True) & _
+            "," & strCriteria & "," & _
+            .Range(.Cells(startRow, startCol), .Cells(lastRow, startCol)).Address(True, False) & _
+            ")," & """""" & ")"
+        
+'        For coltr = startCol To lastCol
+'            If isnumberic(.Cells(startRow, coltr).Value) And _
+'                Trim(.Cells(startRow, coltr).Value) <> vbNullString Then
+'
+'                '.Cells(rowToPlot,coltr).value =
+'
+'            End If
+'        Next
+    End With
+    
+End Function
