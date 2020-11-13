@@ -170,3 +170,106 @@ Function CloseWorkbooks(varArray As Variant)
     Application.Calculation = xlCalculationAutomatic
     
 End Function
+
+Function OpenFilesUnprot(ByRef wbVariableToOpen As Workbook, strCompleteFilename As Variant, strFilename As String, Optional varWsName As Variant = Empty, Optional varKeyword As Variant, Optional xlLkAt As XlLookAt = xlPart, Optional strInputname As String)
+
+    With Application
+        '.DisplayAlerts = False
+        .EnableEvents = False
+        Err.Clear
+        On Error Resume Next
+        Workbooks.Open strCompleteFilename, UpdateLinks:=False
+        DoEvents
+        
+        Application.Wait (Now + TimeValue("0:00:01"))
+        
+        
+    'Set variables of the investor download
+    Set wbVariableToOpen = Workbooks(strFilename)
+        
+        'Application.ProtectedViewWindows.Open strCompleteFilename
+            
+         If ExlHandler.IsWorkbookProtected(wbVariableToOpen) = True Or Err.Number <> 0 Then
+         
+           Application.ProtectedViewWindows.Open Filename:=strCompleteFilename
+            Application.ActiveProtectedViewWindow.Edit
+            Err.Clear
+         End If
+         
+        If Err.Number <> 0 Then
+            ErrorHandler.ErrorHandler "Error while opening " & strCompleteFilename & " Program will abend." & vbNewLine & _
+            "Error in function: " & "OpenFiles" & vbNewLine
+        End If
+        
+        On Error GoTo 0
+        
+        
+        .DisplayAlerts = True
+        .EnableEvents = True
+    End With
+                
+    
+    
+    If IsEmpty(varWsName) = False Then  'only useful when you already know the worksheet names of the input files browsed
+        'Added by ralph
+        Dim inputCtr As Long
+        Dim strWSName As String
+        Dim strKeyword As String
+        Dim searchRng As Variant
+                
+            For inputCtr = LBound(varWsName, 1) To UBound(varWsName, 1)
+                    
+                    strWSName = CStr(varWsName(inputCtr))
+                    strKeyword = CStr(varKeyword(inputCtr))
+                    
+                    On Error Resume Next
+                    Set wsWorking = wbVariableToOpen.Sheets(strWSName)
+                    
+                        If Err.Number <> 0 Then
+                        
+                            MsgBox "Missing worksheet name: '" & strWSName & "'" & vbNewLine _
+                            & "Workbook name: '" & strFilename & "'" & vbNewLine _
+                            & "Input: '" & strInputname & "'" & vbNewLine & vbNewLine _
+                            & "Please upload the correct '" & strInputname & "' file. This will stop the macro.", vbExclamation, "Opening input file"
+                            Err.Clear
+                            CloseWorkbooks Array(wbMirlin, wbSecIdx, wbPrcVolFile)
+                            End
+                            
+                        End If
+                    On Error GoTo 0
+        
+                    With wsWorking
+                    
+                        Set searchRng = .Range(.Cells(1, 1), .Cells(.UsedRange.Rows.Count, .UsedRange.Columns.Count)).Find(What:=strKeyword, LookIn:=xlValues, LookAt:=xlLkAt)
+                        If searchRng Is Nothing Then
+                        
+                            MsgBox "Missing keyword: '" & strKeyword & "'" & vbNewLine _
+                            & "Worksheet name: '" & strWSName & "'" & vbNewLine _
+                            & "Workbook name: '" & strFilename & "'" & vbNewLine _
+                            & "Input file: '" & strInputname & "'" & vbNewLine & vbNewLine _
+                            & "Please upload the correct '" & strInputname & "' file. This will stop the macro.", vbExclamation, "Opening input file"
+                            CloseWorkbooks Array(wbMirlin, wbSecIdx, wbPrcVolFile)
+                            Err.Clear
+                            End
+                        
+                        End If
+                    
+                    End With
+            
+            Next inputCtr
+    End If
+    
+    Workbooks(strFilename).Windows(1).WindowState = xlMinimized
+    
+End Function
+
+Function IsWorkbookProtected(wb As Workbook) As Boolean
+
+With wb
+    
+   IsWorkbookProtected = (.ProtectWindows Or .ProtectStructure)
+    
+End With
+
+End Function
+
