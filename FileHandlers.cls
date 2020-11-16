@@ -193,6 +193,7 @@ Function OpenFilesUnprot(ByRef wbVariableToOpen As Workbook, strCompleteFilename
          
            Application.ProtectedViewWindows.Open Filename:=strCompleteFilename
             Application.ActiveProtectedViewWindow.Edit
+            Set wbVariableToOpen = Workbooks(strFilename)
             Err.Clear
          End If
          
