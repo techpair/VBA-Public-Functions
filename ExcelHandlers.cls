@@ -2279,3 +2279,72 @@ Function sumUpRangesRowNumeric(wb As Workbook, ws As Worksheet, rngToSumUp As Ra
     End With
     
 End Function
+
+Function GetTablesRangePerformAction(wb As Workbook, ws As Worksheet, tabless As Variant, strAction As String)
+    
+    Dim tablesRange As Ranges
+    Dim tableParm As Variant
+    Dim tableKeyword As String
+    
+    Dim startRow As Integer, headerRow As Integer, dataRow As Integer, totalRow As Integer, lastDataRow As Integer, _
+        lastCol As Integer, startCol As Integer
+        
+    Dim tablesLen As Integer, tableStart As Integer, tableCtr As Long, findRng As Range
+    
+    tableStart = LBound(tabless, 1)
+    tablesLen = UBound(tabless, 1)
+    Set findRng = ws.UsedRange
+    
+    'set up variables for each table
+    For tableCtr = tableStart To tablesLen
+        
+        With ws
+        
+        
+            startRow = CInt(FindRow(wb, ws, ws.Range(findRng.Address), CStr(tabless(tableCtr)(1)), xlPart))
+                
+            startCol = CInt(FindCol(wb, ws, ws.Range(findRng.Address), CStr(tabless(tableCtr)(1)), xlPart))
+            
+            Set findRng = .Range(.Cells(startRow + 1, 1), .Cells(.UsedRange.Rows.Count, .UsedRange.Columns.Count))
+                
+            headerRow = FindRow(wb, ws, ws.Range(findRng.Address), CStr(tabless(tableCtr)(3)), xlWhole)
+            
+            totalRow = FindRow(wb, ws, ws.Range(findRng.Address), CStr(tabless(tableCtr)(2)), xlWhole)
+            dataRow = headerRow + 1
+            lastDataRow = totalRow - 1
+            
+            lastCol = ws.Cells(dataRow, startCol).End(xlToRight).Column
+            
+                
+                
+                'if there is a misplaced blank column then check if it's a part of the last column
+            
+            If .Cells(dataRow, lastCol + 2).Value <> vbNullString And _
+              .Cells(dataRow, .Cells.Columns.Count).End(xlToLeft).Column = _
+                .Cells(dataRow, lastCol + 2).End(xlToRight).Column Then
+                
+                lastCol = .Cells(dataRow, lastCol + 2).End(xlToRight).Column
+                
+            End If
+            
+            Application.Run strAction, "wapak: " & .Range(.Cells(dataRow, startCol), .Cells(lastDataRow, lastCol)).Address
+            
+        End With
+        
+    Next tableCtr
+    
+'    'first table parameter is the starting row
+'    For Each tableParm In tablesRange
+'        tableKeyword = CStr(tableParm)
+'
+'    Next tableParm
+    
+    'second table parameter is the header row, next row is data row
+    'last table parameter is the total row, previous row is last data row
+    'if next column of last column is numeric then get the last column of that column
+    'if
+    
+End Function
+
+
+
