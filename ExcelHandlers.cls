@@ -2348,3 +2348,22 @@ End Function
 
 
 
+
+Function GetFirstNumeric(str As String, delim As String) As Integer
+    Dim varSplitStr As Variant, varStr As Variant
+    
+    On Error GoTo errorline
+    
+    varStr = Split(str, delim)
+    
+    For Each varSplitStr In varStr
+        If IsNumeric(varSplitStr) Then
+            GetFirstNumeric = CStr(varSplitStr)
+            Exit Function
+        End If
+    Next
+    
+    Exit Function
+errorline:
+    GetFirstNumeric = 0
+End Function
