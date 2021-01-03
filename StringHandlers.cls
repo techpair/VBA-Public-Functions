@@ -148,3 +148,18 @@ HERE1:
     End If
 
 End Function
+
+Function GetWordInLastParenthesis(s As String) As String
+ Dim i1 As Long, i2 As Long
+ 
+ i1 = InStrRev(s, ")")
+ 
+ If i1 Then
+     i2 = InStrRev(s, "(")
+        If i2 Then
+            Function GetWordInLastParenthesis = Mid(s, i2 + 1, i1 - i2 - 1)
+        End If
+ End If
+ 
+End Function
+    
