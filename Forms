@@ -1,0 +1,188 @@
+Private Sub btn_browseBR_Click()
+    
+      'Browse
+    strMirlinFilenames = Application.GetOpenFilename _
+    (title:="Please select the Mirlin downloads", _
+    FileFilter:="Excel Files *.xl?* (*.xl?*),", MultiSelect:=True)
+            
+            'get the filenames of the workbook and put to array for laters computations
+            
+            Dim wbName As Variant, strWbName As String, wbCtr As Long
+            
+            If IsEmpty(strMirlinFilenames) = False Then
+                
+                On Error Resume Next
+                
+                If UBound(strMirlinFilenames) = 0 Then Exit Sub
+                
+                On Error GoTo 0
+                Err.Clear
+                
+                For Each wbName In strMirlinFilenames
+                    
+                    strWbName = wbName
+                    strWbName = Mid(strWbName, InStrRev(strWbName, "\") + 1, 999)
+                    
+                    If IsEmpty(strMirlinFilename) = True Then
+                        ReDim strMirlinFilename(0)
+                        strMirlinFilename(0) = strWbName
+                    Else
+                        ReDim Preserve strMirlinFilename(wbCtr)
+                        strMirlinFilename(wbCtr) = strWbName
+                    End If
+                    wbCtr = wbCtr + 1
+                        
+                    UpdateLoading processCtr, "Getting files name " & strWbName & "...", False
+                    
+                Next wbName
+                
+                totalProcess = totalProcess + UBound(strMirlinFilenames)
+                
+                bTnGenerate.Caption = "Continue Report Generation"
+            End If
+            'show it filename into the textbox
+End Sub
+
+
+
+Private Sub bTnGenerate_Click()
+    
+    If bTnGenerate.Caption = "Continue Report Generation" Then
+    
+        If IsEmpty(strMirlinFilenames) = False Then
+            frmMain.Hide
+        Else
+            bTnGenerate.Caption = "Please browse files first."
+            Exit Sub
+        End If
+    ElseIf bTnGenerate.Caption = "Continue Generation" Then
+        
+        frmMain.Hide
+        
+        If draftws.Cells(2, 1).Value <> vbNullString Then
+                 
+            Dim draftArrayLastRow As Long
+            
+            hasParentExclusion = True
+                
+            With draftws
+                draftArrayLastRow = .Cells(.Cells.Rows.Count, 1).End(xlUp).row
+                
+                'build array
+                excludeArray = .Range("A2" & ":A" & draftArrayLastRow)
+            End With
+            
+            'autofilter pivot backups using array
+            
+            FilterRangeThenDelete wbConso.Sheets("Conso"), 1, 1, "", excludeArray:=excludeArray
+            
+            'reprocess
+            
+            
+        Else
+             hasParentExclusion = False
+            On Error Resume Next
+            pivotBkupWs.Visible = xlSheetVisible
+            pivotBkupWsUnAlloc.Visible = xlSheetVisible
+            pivotBkupWsPriv.Visible = xlSheetVisible
+            pivotBkupParentWs.Visible = xlSheetVisible
+            pivotBkupParentWsUnAlloc.Visible = xlSheetVisible
+            pivotBkupParentWsPriv.Visible = xlSheetVisible
+            On Error GoTo 0
+            Err.Clear
+        End If
+        
+        draftwb.Close False
+        Set draftwb = Nothing
+        Set draftws = Nothing
+        
+         wbConso.Activate
+        
+        Main2
+                
+    End If
+End Sub
+
+
+Private Sub btnCancel_Click()
+    Unload Me
+End Sub
+
+Private Sub cBoxRem_Change()
+    If cBoxRem.Value = False Then
+       
+        With shMain
+            .Range("AB1:AC4").ClearContents
+        End With
+        
+        With frmMain
+'            .txtBR.Text = vbNullString
+'            .txtSecIdx.Text = vbNullString
+'            .txtPrcVol.Text = vbNullString
+        End With
+        
+        strMirlinFilenames = vbNullString
+        strMirlineFilename = vbNullString
+        
+        strSecIdxcompleteFilename = vbNullString
+        strSecIdxfilename = vbNullString
+        
+        strPrcVolcompleteFilename = vbNullString
+        strPrcVolfilename = vbNullString
+                    
+    End If
+End Sub
+
+Private Sub cBoxGrp_BeforeUpdate(ByVal Cancel As MSForms.ReturnBoolean)
+    cBoxNoMov.Value = False
+    cBoxMov.Value = False
+    cBoxGrp.Value = True
+End Sub
+
+
+
+Private Sub cBoxMov_BeforeUpdate(ByVal Cancel As MSForms.ReturnBoolean)
+    cBoxGrp.Value = False
+    cBoxNoMov.Value = False
+   cBoxMov.Value = True
+End Sub
+
+
+Private Sub cBoxNoMov_BeforeUpdate(ByVal Cancel As MSForms.ReturnBoolean)
+    cBoxGrp.Value = False
+    cBoxMov.Value = False
+    cBoxNoMov.Value = True
+End Sub
+
+
+Private Sub UserForm_Initialize()
+'      With shMain
+'        If .range("AB1").Value <> vbNullString Then    'validate if user wanted to save the input filenames
+'             'if user wants to save the filenames, save filenames
+'             frmMain.cBoxRem.Value = True
+'
+'            strMirlinFilenames = .range("AB2").Value
+'            strMirlineFilename = .range("AC2").Value
+'
+'            strSecIdxcompleteFilename = .range("AB3").Value
+'            strSecIdxfilename = .range("AC3").Value
+'
+'            strPrcVolcompleteFilename = .range("AB4").Value
+'            strPrcVolfilename = .range("AC4").Value
+'
+'            With frmMain
+''            .txtBR.Text = strMirlineFilename
+''            .txtSecIdx.Text = strSecIdxfilename
+''            .txtPrcVol.Text = strPrcVolfilename
+'
+'            End With
+'
+'        End If
+'
+'    End With
+End Sub
+
+
+Private Sub UserForm_Terminate()
+    End
+End Sub
