@@ -1,5 +1,5 @@
 Function GenerateCustomDate(inputDate As Date, excludeWeekends As Boolean, Optional dateFormat As String = "yyyy-mm-dd") As String
-    Dim adjustedDate As Date
+    Dim adjustedDate As String
 
     ' Check if user wants to exclude weekends
     If excludeWeekends Then
